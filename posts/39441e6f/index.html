@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="generator" content="Hexo 4.2.1"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta><title>响应式原理：Vue 3 的 nextTick ？ - 爷ゝ本霸气っ</title><meta description="技术分享,前端开发,数据接口,算法"><meta property="og:type" content="blog"><meta property="og:title" content="爷ゝ本霸气っ"><meta property="og:url" content="https://removeif.github.io/"><meta property="og:site_name" content="爷ゝ本霸气っ"><meta property="og:description" content="技术分享,前端开发,数据接口,算法"><meta property="og:locale" content="zh_CN"><meta property="og:image" content="https://p3-passport.byteimg.com/img/user-avatar/d8bc7351ac3c93b11cd3146be24a0cba~100x100.awebp"><meta property="article:published_time" content="2022-08-27T11:13:16.000Z"><meta property="article:modified_time" content="2023-05-25T17:57:38.747Z"><meta property="article:author" content="removeif"><meta property="article:tag" content="categories-tool"><meta property="twitter:card" content="summary"><meta property="twitter:image" content="https://p3-passport.byteimg.com/img/user-avatar/d8bc7351ac3c93b11cd3146be24a0cba~100x100.awebp"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://removeif.github.io/"},"headline":"爷ゝ本霸气っ","image":[],"datePublished":"2022-08-27T11:13:16.000Z","dateModified":"2023-05-25T17:57:38.747Z","author":{"@type":"Person","name":"removeif"},"description":"技术分享,前端开发,数据接口,算法"}</script><link rel="alternative" href="/atom.xml" title="爷ゝ本霸气っ" type="application/atom+xml"><link rel="icon" href="https://p3-passport.byteimg.com/img/user-avatar/d8bc7351ac3c93b11cd3146be24a0cba~100x100.awebp"><link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.0/css/all.css"><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu:400,600|Source+Code+Pro"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@9.12.0/styles/atom-one-dark.css"><link rel="stylesheet" href="//fonts.googleapis.com/css?family=Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Microsoft YaHei:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&amp;amp;subset=latin,latin-ext"><style>body>.footer,body>.navbar,body>.section{opacity:1}</style><!--!--><!--!--><script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" defer></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/css/justifiedGallery.min.css"><!--!--><!--!--><script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script><link rel="stylesheet" href="/css/style.css"><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script><script src="/js/globalUtils.js"></script><link rel="stylesheet" href="/live2d/waifu.css"><script type="text/javascript" async src="/live2d/autoload.js"></script></head><body class="is-3-column has-navbar-fixed-top"><nav class="navbar navbar-main is-fixed-top"><div class="container"><div class="navbar-brand justify-content-center"><a class="navbar-item navbar-logo" href="/"><img src="https://s1.ax1x.com/2023/05/25/p9H4zND.png" alt="爷ゝ本霸气っ" height="28"></a></div><div class="navbar-menu"><div class="navbar-start"><a class="navbar-item" href="/">首页</a><a class="navbar-item" href="/categories">分类</a><a class="navbar-item" href="/media">影音</a><a class="navbar-item" href="/album">相册</a><a class="navbar-item" href="/about">关于</a><a class="navbar-item" href="/chat_brother">Chat哥</a></div><div class="navbar-end"><a class="navbar-item" target="_blank" rel="noopener" title="Download on GitHub" href="https://github.com/Leon9916/hexo-blog"><i class="fab fa-github"></i></a><a class="navbar-item is-hidden-tablet catalogue" title="目录" href="javascript:;"><i class="fas fa-list-ul"></i></a><a class="navbar-item search" title="搜索" href="javascript:;"><i class="fas fa-search"></i></a><a class="navbar-item" id="night-nav" title="Night Mode" href="javascript:;"><i class="fas fa-moon" id="night-icon"></i></a></div></div></div></nav><script type="text/javascript" src="/js/theme-setting.js"></script><section class="section"><div class="container"><div class="columns"><div class="column order-2 column-main is-8-tablet is-8-desktop is-9-widescreen"><div class="card"><div class="card-image"><span class="image is-7by3"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646f9fde778cf.png" alt="响应式原理：Vue 3 的 nextTick ？"></span></div><article class="card-content article" role="article"><div class="article-meta size-small is-uppercase level is-mobile"><div class="level-left"><span class="level-item"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a><span> / </span><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/">深入Vue3原理</a></span><span class="level-item">18 分钟 读完 (大约 2744 个字)</span></div></div><h1 class="title is-3 is-size-4-mobile">响应式原理：Vue 3 的 nextTick ？</h1><div class="content"><blockquote>
+<p>了解了对于 [Vue<br>3]{.mark} 中的响应式原理：我们通过对 [state]{.mark} 数据的响应式拦截，当触发 [proxy<br>setter]{.mark} 的时候，执行对应状态的 [effect]{.mark} 函数。接下来看一个经典的例子</p>
+</blockquote>
+<a id="more"></a>
+
+<p><strong>前言</strong></p>
+<p>了解了对于 [Vue<br>3]{.mark} 中的响应式原理：我们通过对 [state]{.mark} 数据的响应式拦截，当触发 [proxy<br>setter]{.mark} 的时候，执行对应状态的 [effect]{.mark} 函数。接下来看一个经典的例子：</p>
+<p>&lt;template&gt;</p>
+<p>&lt;div&gt;&lt;/div&gt;</p>
+<p>&lt;button @click=&quot;handleClick&quot;&gt;click&lt;/button&gt;</p>
+<p>&lt;/template&gt;</p>
+<p>&lt;script&gt;</p>
+<p>import { ref } from &#39;vue&#39;;</p>
+<p>export default {</p>
+<p>setup() {</p>
+<p>const number = ref(0)</p>
+<p>function handleClick() {</p>
+<p>for (let i = 0; i &lt; 1000; i++) {</p>
+<p>number.value ++;</p>
+<p>}</p>
+<p>}</p>
+<p>return {</p>
+<p>number,</p>
+<p>handleClick</p>
+<p>}</p>
+<p>}</p>
+<p>}</p>
+<p>&lt;/script&gt;</p>
+<p>当我们按下 [click]{.mark} 按钮的时候，[number]{.mark} 会被循环增加 [1000]{.mark} 次。那么 [Vue]{.mark} 的视图会在点击按钮的时候，从 [1<br>-&gt; 1000]{.mark} 刷新 [1000]{.mark} 次吗？这一小节，我们将一起探探究竟。</p>
+<p><strong>queueJob</strong></p>
+<p>我们小册<a href="https://juejin.cn/book/7146465352120008743/section/7146510212571070471">第四节</a>介绍关于”组件更新策略”的时候，提到了 [setupRenderEffect]{.mark} 函数：</p>
+<p>const setupRenderEffect = (instance, initialVNode, container,<br>anchor, parentSuspense, isSVG, optimized) =&gt; {</p>
+<p>function componentUpdateFn() {</p>
+<p>if (!instance.isMounted) {</p>
+<p>// 初始化组件</p>
+<p>}</p>
+<p>else {</p>
+<p>// 更新组件</p>
+<p>}</p>
+<p>}</p>
+<p>// 创建响应式的副作用渲染函数</p>
+<p>instance.update = effect(componentUpdateFn, prodEffectOptions)</p>
+<p>}</p>
+<p>当时这里为了方便介绍组件的更新策略，我们简写了 [instance.update]{.mark} 的函数创建过程，现在我们来详细看一下 [instance.update]{.mark} 这个函数的创建：</p>
+<p>const setupRenderEffect = (instance, initialVNode, container,<br>anchor, parentSuspense, isSVG, optimized) =&gt; {</p>
+<p>function componentUpdateFn() {</p>
+<p>// ...</p>
+<p>}</p>
+<p>// 创建响应式的副作用渲染函数</p>
+<p>const effect = (instance.effect = new ReactiveEffect(</p>
+<p>componentUpdateFn,</p>
+<p>() =&gt; queueJob(update),</p>
+<p>instance.scope</p>
+<p>))</p>
+<p>// 生成 instance.update 函数</p>
+<p>const update = (instance.update = () =&gt; effect.run())</p>
+<p>update.id = instance.uid</p>
+<p>// 组件允许递归更新</p>
+<p>toggleRecurse(instance, true)</p>
+<p>// 执行更新</p>
+<p>update()</p>
+<p>}</p>
+<p>可以看到在创建 [effect]{.mark} 副作用函数的时候，会给 [ReactiveEffect]{.mark} 传入一个 [scheduler]{.mark} 调度函数，这样生成的 [effect]{.mark} 中就包含了 [scheduler]{.mark} 属性。同时为组件实例生成了一个 [update]{.mark} 属性，该属性的值就是执行 [effect.run]{.mark} 的函数，另外需要注意的一点是 [update]{.mark} 中包含了一个 [id]{.mark} 信息，该值是一个初始值为 [0]{.mark} 的自增数字，下文我们再详细介绍其作用。</p>
+<p>当我们触发 [proxy<br>setter]{.mark} 的时候，触发执行了 [triggerEffect]{.mark} 函数，这次，我们补全 [triggerEffect]{.mark} 函数的实现：</p>
+<p>function triggerEffect(effect, debuggerEventExtraInfo) {</p>
+<p>if (effect !== activeEffect || effect.allowRecurse) {</p>
+<p>// effect 上存在 scheduler</p>
+<p>if (effect.scheduler) {</p>
+<p>effect.scheduler()</p>
+<p>} else {</p>
+<p>effect.run()</p>
+<p>}</p>
+<p>}</p>
+<p>}</p>
+<p>可以看到，如果 [effect]{.mark} 上有 [scheduler]{.mark} 属性时，执行的是 [effect.scheduler]{.mark} 函数，否则执行 [effect.run]{.mark} 进行视图更新。而这里显然我们需要先执行调度函数 [scheduler]{.mark}。通过上面的信息，我们也清楚地知道 [scheduler]{.mark} 函数的本质就是执行了 [queueJob(update)]{.mark} 函数，一起来看一下 [queueJob]{.mark} 的实现：</p>
+<p>export function queueJob(job) {</p>
+<p>// 去重判断</p>
+<p>if (</p>
+<p>!queue.length ||</p>
+<p>!queue.includes(</p>
+<p>job,</p>
+<p>isFlushing &amp;&amp; job.allowRecurse ? flushIndex + 1 : flushIndex</p>
+<p>)</p>
+<p>) {</p>
+<p>// 添加到队列尾部</p>
+<p>if (job.id == null) {</p>
+<p>queue.push(job)</p>
+<p>} else {</p>
+<p>// 按照 job id 自增的顺序添加</p>
+<p>queue.splice(findInsertionIndex(job.id), 0, job)</p>
+<p>}</p>
+<p>queueFlush()</p>
+<p>}</p>
+<p>}</p>
+<p>[queueJob]{.mark} 就是维护了一个 [queue]{.mark} 队列，目的是向 [queue]{.mark} 队列中添加 [job]{.mark} 对象，这里的 [job]{.mark} 就是我们前面的 [update]{.mark} 对象。</p>
+<p>这里有几点需要说明一下。</p>
+<p>第一个是该函数会有一个 [isFlushing &amp;&amp;<br>job.allowRecurse]{.mark} 判断，这个作用是啥呢？简单点说就是当队列正处于更新状态中（[isFlushing<br>= true]{.mark}） 且允许递归调用（ [job.allowRecurse =<br>true]{.mark}）时，将搜索起始位置加一，无法搜索到自身，也就是允许递归调用了。什么情况下会出现递归调用？</p>
+<p>&lt;!-- 父组件 --&gt;</p>
+<p>&lt;template&gt;</p>
+<p>&lt;div&gt;&lt;/div&gt;</p>
+<p>&lt;Child /&gt;</p>
+<p>&lt;/template&gt;</p>
+<p>&lt;script&gt;</p>
+<p>import { ref, provide } from &#39;vue&#39;;</p>
+<p>import Child from &#39;./components/Child.vue&#39;;</p>
+<p>export default {</p>
+<p>setup() {</p>
+<p>const msg = ref(&quot;initial&quot;);</p>
+<p>provide(&quot;CONTEXT&quot;, { msg });</p>
+<p>return {</p>
+<p>msg</p>
+<p>};</p>
+<p>},</p>
+<p>components: {</p>
+<p>Child</p>
+<p>}</p>
+<p>}</p>
+<p>&lt;/script&gt;</p>
+<p>&lt;!-- 子组件 Child --&gt;</p>
+<p>&lt;template&gt;</p>
+<p>&lt;div&gt;child&lt;/div&gt;</p>
+<p>&lt;/template&gt;</p>
+<p>&lt;script&gt;</p>
+<p>import { inject } from &#39;vue&#39;;</p>
+<p>export default {</p>
+<p>setup() {</p>
+<p>const ctx = inject(&quot;CONTEXT&quot;);</p>
+<p>ctx.msg.value = &quot;updated&quot;;</p>
+<p>}</p>
+<p>}</p>
+<p>&lt;/script&gt;</p>
+<p>对于这种情况，首先是父组件进入 [job]{.mark} 然后渲染父组件，接着进入子组件渲染，但是子组件内部修改了父组件的状态 [msg]{.mark}。此时父组件需要支持递归渲染，也就是递归更新。</p>
+<p>注意，这里的更新已经不属于单选数据流了，<strong>如果过多地打破单向数据流，会导致多次递归执行更新，可能会导致性能下降。</strong></p>
+<p>第二个是，[queueJob]{.mark} 函数向 [queue]{.mark} 队列中添加的 [job]{.mark} 是按照 [id]{.mark} 排序的，[id]{.mark} 小的 [Job]{.mark} 先被推入 [queue]{.mark} 中执行，这保证了，<strong>父组件永远比子组件先更新</strong>（因为先创建父组件，再创建子组件，子组件可能依赖父组件的数据）。</p>
+<p>再回到函数的本身来说，当我们执行 [for]{.mark} 循环 [1000]{.mark} 次 [setter]{.mark} 的时候，因为在第一步进行了去重判断，所以 [update]{.mark} 函数只会被添加一次到 [queue]{.mark} 中。<strong>这里的 [update]{.mark} 函数就是组件的渲染函数</strong>。所以无论这里执行多少次循环，渲染更新函数只会被执行一次。</p>
+<p><strong>queueFlush</strong></p>
+<p>上面说到了无论循环多少次 [setter]{.mark}，这里相同 [id]{.mark} 的 [update]{.mark} 只会被添加一次到 [queue]{.mark} 中。</p>
+<p>细心的小伙伴可能会有这样的疑问：<strong>那么为什么视图不是从 [0 -&gt;<br>1]{.mark} 而是直接从 [0 -&gt; 1000]{.mark} 了呢？</strong></p>
+<p>要回答上面的问题，就得了解一下 [queue]{.mark} 的执行更新相关的内容了，也就是 [queueJob]{.mark} 的最后一步 [queueFlush]{.mark}：</p>
+<p>function queueFlush() {</p>
+<p>// 是否正处于刷新状态</p>
+<p>if (!isFlushing &amp;&amp; !isFlushPending) {</p>
+<p>isFlushPending = true</p>
+<p>currentFlushPromise = resolvedPromise.then(flushJobs)</p>
+<p>}</p>
+<p>}</p>
+<p>可以看到这里，[vue<br>3]{.mark} 完全抛弃了除了 [promise]{.mark} 之外的异步方案，不再支持[vue<br>2]{.mark} 的 [Promise &gt; MutationObserver &gt; setImmediate &gt;<br>setTimeout]{.mark} 其他三种异步操作了。</p>
+<p>所以这里，[vue<br>3]{.mark} 直接通过 [promise]{.mark} 创建了一个微任务 [flushJobs]{.mark} 进行异步调度更新，只要在浏览器当前 [tick]{.mark} 内的所有更新任务都会被推入 [queue]{.mark} 中，然后在下一个 [tick]{.mark} 中统一执行更新。</p>
+<p>function flushJobs(seen) {</p>
+<p>// 是否正在等待执行</p>
+<p>isFlushPending = false</p>
+<p>// 正在执行</p>
+<p>isFlushing = true</p>
+<p>// 在更新前，重新排序好更新队列 queue 的顺序</p>
+<p>// 这确保了:</p>
+<p>// 1.<br>组件都是从父组件向子组件进行更新的。（因为父组件都在子组件之前创建的</p>
+<p>// 所以子组件的渲染的 effect 的优先级比较低）</p>
+<p>// 2. 如果父组件在更新前卸载了组件，这次更新将会被跳过。</p>
+<p>queue.sort(comparator)</p>
+<p>try {</p>
+<p>// 遍历主任务队列，批量执行更新任务</p>
+<p>for (flushIndex = 0; flushIndex &lt; queue.length; flushIndex++) {</p>
+<p>const job = queue[flushIndex]</p>
+<p>if (job &amp;&amp; job.active !== false) {</p>
+<p>callWithErrorHandling(job, null, ErrorCodes.SCHEDULER)</p>
+<p>}</p>
+<p>}</p>
+<p>} finally {</p>
+<p>// 队列任务执行完，重置队列索引</p>
+<p>flushIndex = 0</p>
+<p>// 清空队列</p>
+<p>queue.length = 0</p>
+<p>// 执行后置队列任务</p>
+<p>flushPostFlushCbs(seen)</p>
+<p>// 重置队列执行状态</p>
+<p>isFlushing = false</p>
+<p>// 重置当前微任务为 Null</p>
+<p>currentFlushPromise = null</p>
+<p>// 如果主任务队列、后置任务队列还有没被清空，就继续递归执行</p>
+<p>if (queue.length || pendingPostFlushCbs.length) {</p>
+<p>flushJobs(seen)</p>
+<p>}</p>
+<p>}</p>
+<p>}</p>
+<p>在详细介绍 [flushJobs]{.mark} 之前，我想先简单介绍一下 [Vue]{.mark} 的更新任务执行机制中的一个重要概念：<strong>更新时机。</strong> [Vue]{.mark} 整个更新过程分成了三个部分：</p>
+<p>更新前，称之为 </p>
+<p>pre 阶段；</p>
+<p>更新中，也就是 </p>
+<p>flushing 中，执行 </p>
+<p>update 更新；</p>
+<p>更新后，称之为 </p>
+<p>flushPost 阶段。</p>
+<p><strong>更新前</strong></p>
+<p>什么是 [pre]{.mark} 阶段呢？拿组件更新举例，就是在 [Vue]{.mark} 组件更新<strong>之前</strong>被调用执行的阶段。默认情况下，[Vue]{.mark} 的 [watch]{.mark} 和 [watchEffect]{.mark} 函数中的 [callback]{.mark} 函数都是在这个阶段被执行的，我们简单看一下 [watch]{.mark} 中的源码实现：</p>
+<p>function watch(surce, cb, {immediate, deep, flush, onTrack,<br>onTrigger} = {}) {</p>
+<p>// ...</p>
+<p>if (flush === &#39;sync&#39;) {</p>
+<p>scheduler = job</p>
+<p>} else if (flush === &#39;post&#39;) {</p>
+<p>scheduler = () =&gt; queuePostRenderEffect(job, instance &amp;&amp;<br>instance.suspense)</p>
+<p>} else {</p>
+<p>// 默认会给 job 打上 pre 的标记</p>
+<p>job.pre = true</p>
+<p>if (instance) job.id = instance.uid</p>
+<p>scheduler = () =&gt; queueJob(job)</p>
+<p>}</p>
+<p>}</p>
+<p>可以看到 [watch]{.mark} 的 [job]{.mark} 会被默认打上 [pre]{.mark} 的标签。而带 [pre]{.mark} 标签的 [job]{.mark} 则会在渲染前被执行：</p>
+<p>const updateComponent = () =&gt; {</p>
+<p>// ... 省略 n 行代码</p>
+<p>updateComponentPreRender(instance, n2, optimized)</p>
+<p>}</p>
+<p>function updateComponentPreRender() {</p>
+<p>// ... 省略 n 行代码</p>
+<p>flushPreFlushCbs()</p>
+<p>}</p>
+<p>export function flushPreFlushCbs(seen, i = isFlushing ? flushIndex + 1 :<br>0) {</p>
+<p>for (; i &lt; queue.length; i++) {</p>
+<p>const cb = queue[i]</p>
+<p>if (cb &amp;&amp; cb.pre) {</p>
+<p>queue.splice(i, 1)</p>
+<p>i--</p>
+<p>cb()</p>
+<p>}</p>
+<p>}</p>
+<p>}</p>
+<p>可以看到，在执行 [updateComponent]{.mark} 更新组件之前，会调用 [flushPreFlushCbs]{.mark} 函数，执行所有带上 [pre]{.mark} 标签的 [job]{.mark}。</p>
+<p><strong>更新中</strong></p>
+<p>更新中的过程就是 [flushJobs]{.mark} 函数体前面的部分，首先会通过一个 [comparator]{.mark} 函数对 [queue]{.mark} 队列进行排序，这里排序的目的主要是保证父组件优先于子组件执行，另外在执行后续循环执行 [job]{.mark} 任务的时候，通过判断 [job.active<br>!==<br>false]{.mark} 来剔除被 [unmount]{.mark} 卸载的组件，卸载的组件会有 [active<br>= false]{.mark} 的标记。</p>
+<p>最后即通过 [callWithErrorHandling]{.mark} 函数执行 [queue]{.mark} 队列中的每一个 [job]{.mark}:</p>
+<p>export function callWithErrorHandling(fn, instance, type,<br>args) {</p>
+<p>let res</p>
+<p>try {</p>
+<p>res = args ? fn(...args) : fn()</p>
+<p>} catch (err) {</p>
+<p>handleError(err, instance, type)</p>
+<p>}</p>
+<p>return res</p>
+<p>}</p>
+<p><strong>更新后</strong></p>
+<p>当页面更新后，需要执行的一些回调函数都存储在 [pendingPostFlushCbs]{.mark} 中，通过 [flushPostFlushCbs]{.mark} 函数来进行回调执行：</p>
+<p>export function flushPostFlushCbs(seen) {</p>
+<p>// 存在 job 才执行</p>
+<p>if (pendingPostFlushCbs.length) {</p>
+<p>// 去重</p>
+<p>const deduped = [...new Set(pendingPostFlushCbs)]</p>
+<p>pendingPostFlushCbs.length = 0</p>
+<p>// #1947 already has active queue, nested flushPostFlushCbs call</p>
+<p>// 已经存在activePostFlushCbs，嵌套flushPostFlushCbs调用，直接return</p>
+<p>if (activePostFlushCbs) {</p>
+<p>activePostFlushCbs.push(...deduped)</p>
+<p>return</p>
+<p>}</p>
+<p>activePostFlushCbs = deduped</p>
+<p>// 按job.id升序</p>
+<p>activePostFlushCbs.sort((a, b) =&gt; getId(a) - getId(b))</p>
+<p>// 循环执行job</p>
+<p>for (</p>
+<p>postFlushIndex = 0;</p>
+<p>postFlushIndex &lt; activePostFlushCbs.length;</p>
+<p>postFlushIndex++</p>
+<p>) {</p>
+<p>activePostFlushCbs[postFlushIndex]()</p>
+<p>}</p>
+<p>activePostFlushCbs = null</p>
+<p>postFlushIndex = 0</p>
+<p>}</p>
+<p>}</p>
+<p>一些需要渲染完成后再执行的钩子函数都会在这个阶段执行，比如 [mounted<br>hook]{.mark} 等等。</p>
+<p><strong>总结</strong></p>
+<p>通过上面的一些介绍，我们可以了解到本小节开头的示例中，[number]{.mark} 的更新函数只会被同步地添加一次到更新队列 [queue]{.mark} 中，但更新是异步的，会在 [nextTick]{.mark} 也就是 [Promise.then]{.mark} 的微任务中执行 [update]{.mark}，所以更新会直接从 [0<br>-&gt; 1000]{.mark}。</p>
+<p>另外，需要注意的是一个组件内的相同 [update]{.mark} 只会有一个被推入 [queue]{.mark} 中。比如下面的例子：</p>
+<p>&lt;template&gt;</p>
+<p>&lt;div&gt;&lt;/div&gt;</p>
+<p>&lt;div&gt;&lt;/div&gt;</p>
+<p>&lt;button @click=&quot;handleClick&quot;&gt;click&lt;/button&gt;</p>
+<p>&lt;/template&gt;</p>
+<p>&lt;script&gt;</p>
+<p>import { ref } from &#39;vue&#39;</p>
+<p>export default {</p>
+<p>setup() {</p>
+<p>const number = ref(0)</p>
+<p>const msg = ref(&#39;init&#39;)</p>
+<p>function handleClick() {</p>
+<p>for (let i = 0; i &lt; 1000; i++) {</p>
+<p>number.value ++;</p>
+<p>}</p>
+<p>msg.value = &#39;hello world&#39;</p>
+<p>}</p>
+<p>return {</p>
+<p>number,</p>
+<p>msg,</p>
+<p>handleClick</p>
+<p>}</p>
+<p>}</p>
+<p>}</p>
+<p>&lt;/script&gt;</p>
+<p>当点击按钮时，因为 [update]{.mark} 内部执行的是当前组件的同一个 [componentUpdateFn]{.mark} 函数，状态 [msg]{.mark} 和 [number]{.mark} 的 [update]{.mark} 的 [id]{.mark} 是一致的，所以 [queue]{.mark} 中，只有一个 [update]{.mark} 函数，只会进行一次统一的更新。</p>
+</div><div class="article-tags size-small is-uppercase mb-4"><i class="fas fa-tags has-text-grey"></i> <a class="link-muted mr-2" rel="tag" href="/tags/%E5%89%8D%E7%AB%AF/">前端</a></div><div class="recommend-post"><span class="is-size-6 has-text-grey has-mr-7"># 推荐文章</span><br><span>  1.<a class="is-size-6" href="/posts/39441e6f/" target="_blank">响应式原理：Vue 3 的 nextTick ？</a><br></span><span>  2.<a class="is-size-6" href="/posts/91e84f90/" target="_blank">响应式原理：副作用函数探秘</a><br></span><span>  3.<a class="is-size-6" href="/posts/bf54f4c/" target="_blank">响应式原理：基于 Proxy 的响应式是什么样的？</a><br></span><span>  4.<a class="is-size-6" href="/posts/16c5c5d5/" target="_blank">渲染器：数组子节点的 diff 算法</a><br></span><span>  5.<a class="is-size-6" href="/posts/8d428288/" target="_blank">渲染器：组件是如何完成更新的？</a><br></span></div></article></div><div class="card"><div class="card-content"><h3 class="menu-label has-text-centered">喜欢这篇文章？打赏一下作者吧</h3><div class="buttons is-centered"><a class="button is-info donate"><span class="icon is-small"><i class="fab fa-alipay"></i></span><span>支付宝</span><span class="qrcode"><img src="https://cdn-us.imgs.moe/2023/05/26/646fb97e763cc.jpg" alt="支付宝"></span></a><a class="button is-success donate"><span class="icon is-small"><i class="fab fa-weixin"></i></span><span>微信</span><span class="qrcode"><img src="https://cdn-us.imgs.moe/2023/05/26/646fb97e763da.jpg" alt="微信"></span></a></div></div></div><nav class="post-navigation mt-4 level is-mobile"><div class="level-start"><a class="article-nav-prev level level-item link-muted" href="/posts/e76f424e/"><i class="level-item fas fa-chevron-left"></i><span class="level-item">让 Vite 助力你的前端工程化之路</span></a></div><div class="level-end"><a class="article-nav-next level level-item link-muted" href="/posts/91e84f90/"><span class="level-item">响应式原理：副作用函数探秘</span><i class="level-item fas fa-chevron-right"></i></a></div></nav></div><div class="column column-left is-4-tablet is-4-desktop is-4-widescreen  order-1 is-sticky"><!--!--><div class="card widget"><div class="card-content"><nav class="level"><div class="level-item has-text-centered flex-shrink-1"><div><figure class="image is-128x128 mx-auto mb-2"><img class="is-rounded" src="https://p3-passport.byteimg.com/img/user-avatar/d8bc7351ac3c93b11cd3146be24a0cba~100x100.awebp" alt="爷ゝ本霸气っ"></figure><p class="title is-size-4 is-block line-height-inherit">爷ゝ本霸气っ</p><p class="is-size-6 is-block">我欲乘风去，昔年化龙归</p><p class="is-size-6 is-flex justify-content-center"><i class="fas fa-map-marker-alt mr-1"></i><span>鹏城</span></p></div></div></nav><nav class="level is-mobile"><div class="level-item has-text-centered is-marginless"><div><p class="heading">文章</p><a href="/archives"><p class="title">22</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">分类</p><a href="/categories"><p class="title">7</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">标签</p><a href="/tags"><p class="title">6</p></a></div></div></nav><hr><p id="hitokoto">:D 舔狗日记获取中...</p><script type="text/javascript" defer>
+                                // 获取舔狗日记
+                                const randomTianDogData = function (list) {
+                                    // 随机取出一个元素
+                                    const randomIndex = Math.floor(Math.random() * list.length); // 生成 0 到 list.length-1 之间的整数
+                                    return list[randomIndex]; // 根据随机下标获取数组中的元素
+                                }
+                                // 获取年月日
+                                const randomTianDogDate = function () {
+                                    // 获取 1970 年 1 月 1 日至今的毫秒数范围
+                                    const minTimestamp = new Date('2020-01-01').getTime();
+                                    const maxTimestamp = new Date().getTime();
+                        
+                                    // 生成指定范围内的随机日期
+                                    const randomTimestamp = Math.floor(Math.random() * (maxTimestamp - minTimestamp)) + minTimestamp;
+                                    const randomDate = new Date(randomTimestamp);
+                        
+                                    // 获取随机日期的年、月、日
+                                    const year = randomDate.getFullYear();
+                                    const month = randomDate.getMonth() + 1;
+                                    const day = randomDate.getDate();
+                        
+                                    return year + '-' + month + '-' + day // 输出随机的年月日
+                                }
+
+                                function getYiyan(){
+                                    $.when(
+                                      $.getJSON('http://111.230.213.88/mockData/weathers.json'),
+                                      $.getJSON('http://111.230.213.88/mockData/diaries.json')
+                                    ).done(function(data1, data2) {
+                                      // 在这里对两个接口的数据进行操作
+                                      $('#hitokoto').html("");
+                                      $('#hitokoto').append(
+                                        "<p>" + randomTianDogDate() + "</p><p>" + randomTianDogData(data1[0]) + "</p>" +
+                                        "<strong style='color: #3273dc;'>" + randomTianDogData(data2[0]) + "</strong>"
+                                      );  
+                                    }).fail(function() {
+                                      console.log('Error: 舔狗日记获取失败.');
+                                    });
+                                }
+                                $(function (){getYiyan();$('#hitokoto').click(function(){getYiyan();})});</script></div></div><!--!--><div class="card widget"><div class="card-content"><h3 class="menu-label">最新文章</h3><article class="media"><a class="media-left" href="/posts/658c93f2/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646fa77438c98.png" alt="模块标准：为什么 ESM 是前端模块化的未来？"></p></a><div class="media-content size-small"><p><time dateTime="2022-09-17T11:13:16.000Z">2022-09-17</time></p><p class="title is-6"><a class="link-muted" href="/posts/658c93f2/">模块标准：为什么 ESM 是前端模块化的未来？</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAVite/">深入浅出Vite</a></p></div></article><article class="media"><a class="media-left" href="/posts/e76f424e/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646fa4ee2fa1b.png" alt="让 Vite 助力你的前端工程化之路"></p></a><div class="media-content size-small"><p><time dateTime="2022-09-07T11:13:16.000Z">2022-09-07</time></p><p class="title is-6"><a class="link-muted" href="/posts/e76f424e/">让 Vite 助力你的前端工程化之路</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAVite/">深入浅出Vite</a></p></div></article><article class="media"><a class="media-left" href="/posts/39441e6f/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646f9fde778cf.png" alt="响应式原理：Vue 3 的 nextTick ？"></p></a><div class="media-content size-small"><p><time dateTime="2022-08-27T11:13:16.000Z">2022-08-27</time></p><p class="title is-6"><a class="link-muted" href="/posts/39441e6f/">响应式原理：Vue 3 的 nextTick ？</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/">深入Vue3原理</a></p></div></article><article class="media"><a class="media-left" href="/posts/91e84f90/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646f9fde38e7e.png" alt="响应式原理：副作用函数探秘"></p></a><div class="media-content size-small"><p><time dateTime="2022-08-17T11:13:16.000Z">2022-08-17</time></p><p class="title is-6"><a class="link-muted" href="/posts/91e84f90/">响应式原理：副作用函数探秘</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/">深入Vue3原理</a></p></div></article><article class="media"><a class="media-left" href="/posts/bf54f4c/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646f9dbdbc919.png" alt="响应式原理：基于 Proxy 的响应式是什么样的？"></p></a><div class="media-content size-small"><p><time dateTime="2022-08-07T11:13:16.000Z">2022-08-07</time></p><p class="title is-6"><a class="link-muted" href="/posts/bf54f4c/">响应式原理：基于 Proxy 的响应式是什么样的？</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/">深入Vue3原理</a></p></div></article></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">分类</h3><ul class="menu-list"><li><a class="level is-mobile is-marginless" href="/categories/%E5%89%8D%E7%AB%AF/"><span class="level-start"><span class="level-item">前端</span></span><span class="level-end"><span class="level-item tag">10</span></span></a><ul class="mr-0"><li><a class="level is-mobile is-marginless" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/"><span class="level-start"><span class="level-item">深入Vue3原理</span></span><span class="level-end"><span class="level-item tag">8</span></span></a></li><li><a class="level is-mobile is-marginless" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAVite/"><span class="level-start"><span class="level-item">深入浅出Vite</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li></ul></li><li><a class="level is-mobile is-marginless" href="/categories/%E5%B7%A5%E5%85%B7%E6%95%99%E7%A8%8B/"><span class="level-start"><span class="level-item">工具教程</span></span><span class="level-end"><span class="level-item tag">4</span></span></a><ul class="mr-0"><li><a class="level is-mobile is-marginless" href="/categories/%E5%B7%A5%E5%85%B7%E6%95%99%E7%A8%8B/%E4%B8%BB%E9%A2%98%E5%B7%A5%E5%85%B7/"><span class="level-start"><span class="level-item">主题工具</span></span><span class="level-end"><span class="level-item tag">4</span></span></a></li></ul></li><li><a class="level is-mobile is-marginless" href="/categories/%E6%96%87%E7%AB%A0%E5%8A%A0%E5%AF%86/"><span class="level-start"><span class="level-item">文章加密</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/categories/%E6%B3%95%E5%BE%8B/"><span class="level-start"><span class="level-item">法律</span></span><span class="level-end"><span class="level-item tag">7</span></span></a></li></ul></div></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">归档</h3><ul class="menu-list"><li><a class="level is-mobile is-marginless" href="/archives/2022/09/"><span class="level-start"><span class="level-item">九月 2022</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2022/08/"><span class="level-start"><span class="level-item">八月 2022</span></span><span class="level-end"><span class="level-item tag">3</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2022/07/"><span class="level-start"><span class="level-item">七月 2022</span></span><span class="level-end"><span class="level-item tag">3</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2022/06/"><span class="level-start"><span class="level-item">六月 2022</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2020/01/"><span class="level-start"><span class="level-item">一月 2020</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><a class="level is-mobile is-marginless" href="/archives/"><span class="level-start"><span class="level-item">查看全部&gt;&gt;</span></span></a></ul></div></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">标签</h3><div class="field is-grouped is-grouped-multiline"><div class="control"><a class="tags has-addons" href="/tags/%E5%89%8D%E7%AB%AF/"><span class="tag">前端</span><span class="tag is-grey-lightest">10</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E6%B3%95%E5%BE%8B/"><span class="tag">法律</span><span class="tag is-grey-lightest">7</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E5%B7%A5%E5%85%B7%E6%95%99%E7%A8%8B/"><span class="tag">工具教程</span><span class="tag is-grey-lightest">3</span></a></div><div class="control"><a class="tags has-addons" href="/tags/hexo%E4%B8%BB%E9%A2%98/"><span class="tag">hexo主题</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/icarus%E4%B8%BB%E9%A2%98%E9%85%8D%E7%BD%AE/"><span class="tag">icarus主题配置</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E5%8A%A0%E5%AF%86%E6%96%87%E7%AB%A0/"><span class="tag">加密文章</span><span class="tag is-grey-lightest">1</span></a></div></div></div></div></div><!--!--></div></div></div></section><footer class="footer"><div class="container"><div class="level"><div class="level-start"><a class="footer-logo is-block mb-2" href="/"><img src="https://s1.ax1x.com/2023/05/25/p9H4zND.png" alt="爷ゝ本霸气っ" height="28"></a><p class="size-small"><span>&copy; 2023 爷ゝ本霸气っ</span>  Powered by <a href="https://hexo.io/" target="_blank">Hexo</a> &amp; <a href="https://github.com/ppoffice/hexo-theme-icarus" target="_blank">Icarus</a>,Modify by <a href="https://github.com/Leon9916/hexo-blog" target="_blank">removeif</a> <br>© 版权2说明：[本网站所有内容均收集于互联网或自己创作,<br>    方便于自己学习交流，如有侵权，请<a href="mailto:2476288442@qq.com">联系</a>，立即处理]<br><script type="text/javascript" src="/js/statistics.js"></script><span id="statistic-times">网站运行时间统计加载中...</span></p></div><div class="level-end"></div></div></div></footer><script src="https://cdn.jsdelivr.net/npm/moment@2.22.2/min/moment-with-locales.min.js"></script><script>moment.locale("zh-CN");</script><script>var IcarusThemeSettings = {
+            site: {
+                url: 'https://removeif.github.io',
+                external_link: {"enable":true,"exclude":[]}
+            },
+            article: {
+                highlight: {
+                    clipboard: true,
+                    fold: 'unfolded'
+                }
+            }
+        };</script><script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.4/dist/clipboard.min.js" defer></script><script src="/js/animation.js"></script><a id="back-to-top" title="回到顶端" href="javascript:;"><i class="fas fa-chevron-up"></i></a><script src="/js/back-to-top.js" defer></script><!--!--><!--!--><script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/js/lightgallery.min.js" defer></script><script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js" defer></script><script src="/js/gallery.js" defer></script><!--!--><!--!--><!--!--><script src="/js/main.js" defer></script><script src="/js/comment-issue-data.js" defer></script><link rel="stylesheet" href="/css/insight.css"><div class="searchbox ins-search"><div class="searchbox-container ins-search-container"><div class="searchbox-input-wrapper"><input class="searchbox-input ins-search-input" type="text" placeholder="想要查找什么..."><span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span></div><div class="searchbox-result-wrapper ins-section-wrapper"><div class="ins-section-container"></div></div></div></div><script>(function (window) {
+            var INSIGHT_CONFIG = {
+                TRANSLATION: {
+                    POSTS: '文章',
+                    PAGES: '页面',
+                    CATEGORIES: '分类',
+                    TAGS: '标签',
+                    UNTITLED: '(无标题)',
+                },
+                CONTENT_URL: '/content.json',
+            };
+            window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+        })(window);</script><script src="/js/insight.js" defer></script></body></html>

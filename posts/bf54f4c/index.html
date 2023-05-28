@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="generator" content="Hexo 4.2.1"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta><title>响应式原理：基于 Proxy 的响应式是什么样的？ - 爷ゝ本霸气っ</title><meta description="技术分享,前端开发,数据接口,算法"><meta property="og:type" content="blog"><meta property="og:title" content="爷ゝ本霸气っ"><meta property="og:url" content="https://removeif.github.io/"><meta property="og:site_name" content="爷ゝ本霸气っ"><meta property="og:description" content="技术分享,前端开发,数据接口,算法"><meta property="og:locale" content="zh_CN"><meta property="og:image" content="https://p3-passport.byteimg.com/img/user-avatar/d8bc7351ac3c93b11cd3146be24a0cba~100x100.awebp"><meta property="article:published_time" content="2022-08-07T11:13:16.000Z"><meta property="article:modified_time" content="2023-05-25T17:43:43.375Z"><meta property="article:author" content="removeif"><meta property="article:tag" content="categories-tool"><meta property="twitter:card" content="summary"><meta property="twitter:image" content="https://p3-passport.byteimg.com/img/user-avatar/d8bc7351ac3c93b11cd3146be24a0cba~100x100.awebp"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://removeif.github.io/"},"headline":"爷ゝ本霸气っ","image":[],"datePublished":"2022-08-07T11:13:16.000Z","dateModified":"2023-05-25T17:43:43.375Z","author":{"@type":"Person","name":"removeif"},"description":"技术分享,前端开发,数据接口,算法"}</script><link rel="alternative" href="/atom.xml" title="爷ゝ本霸气っ" type="application/atom+xml"><link rel="icon" href="https://p3-passport.byteimg.com/img/user-avatar/d8bc7351ac3c93b11cd3146be24a0cba~100x100.awebp"><link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.0/css/all.css"><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu:400,600|Source+Code+Pro"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@9.12.0/styles/atom-one-dark.css"><link rel="stylesheet" href="//fonts.googleapis.com/css?family=Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Microsoft YaHei:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&amp;amp;subset=latin,latin-ext"><style>body>.footer,body>.navbar,body>.section{opacity:1}</style><!--!--><!--!--><script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" defer></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/css/justifiedGallery.min.css"><!--!--><!--!--><script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script><link rel="stylesheet" href="/css/style.css"><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script><script src="/js/globalUtils.js"></script><link rel="stylesheet" href="/live2d/waifu.css"><script type="text/javascript" async src="/live2d/autoload.js"></script></head><body class="is-3-column has-navbar-fixed-top"><nav class="navbar navbar-main is-fixed-top"><div class="container"><div class="navbar-brand justify-content-center"><a class="navbar-item navbar-logo" href="/"><img src="https://s1.ax1x.com/2023/05/25/p9H4zND.png" alt="爷ゝ本霸气っ" height="28"></a></div><div class="navbar-menu"><div class="navbar-start"><a class="navbar-item" href="/">首页</a><a class="navbar-item" href="/categories">分类</a><a class="navbar-item" href="/media">影音</a><a class="navbar-item" href="/album">相册</a><a class="navbar-item" href="/about">关于</a><a class="navbar-item" href="/chat_brother">Chat哥</a></div><div class="navbar-end"><a class="navbar-item" target="_blank" rel="noopener" title="Download on GitHub" href="https://github.com/Leon9916/hexo-blog"><i class="fab fa-github"></i></a><a class="navbar-item is-hidden-tablet catalogue" title="目录" href="javascript:;"><i class="fas fa-list-ul"></i></a><a class="navbar-item search" title="搜索" href="javascript:;"><i class="fas fa-search"></i></a><a class="navbar-item" id="night-nav" title="Night Mode" href="javascript:;"><i class="fas fa-moon" id="night-icon"></i></a></div></div></div></nav><script type="text/javascript" src="/js/theme-setting.js"></script><section class="section"><div class="container"><div class="columns"><div class="column order-2 column-main is-8-tablet is-8-desktop is-9-widescreen"><div class="card"><div class="card-image"><span class="image is-7by3"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646f9dbdbc919.png" alt="响应式原理：基于 Proxy 的响应式是什么样的？"></span></div><article class="card-content article" role="article"><div class="article-meta size-small is-uppercase level is-mobile"><div class="level-left"><span class="level-item"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a><span> / </span><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/">深入Vue3原理</a></span><span class="level-item">27 分钟 读完 (大约 3977 个字)</span></div></div><h1 class="title is-3 is-size-4-mobile">响应式原理：基于 Proxy 的响应式是什么样的？</h1><div class="content"><blockquote>
+<p>本文开启响应式原理的篇章，在开启这个篇章之前，我们先来了解一下 [Vue3]{.mark} 中一个基于 [Composition<br>API]{.mark} 响应式应用的例子是如何编写的</p>
+</blockquote>
+<a id="more"></a>
+
+<p><strong>前言</strong></p>
+<p>本文开启响应式原理的篇章，在开启这个篇章之前，我们先来了解一下 [Vue3]{.mark} 中一个基于 [Composition<br>API]{.mark} 响应式应用的例子是如何编写的：</p>
+<p>&lt;template&gt;</p>
+<p>&lt;div&gt;</p>
+ 
+
+<p>&lt;/div&gt;</p>
+<p>&lt;/template&gt;</p>
+<p>&lt;script&gt;</p>
+<p>import { reactive, ref } from &#39;vue&#39;</p>
+<p>export default {</p>
+<p>setup() {</p>
+<p>const state = reactive({</p>
+<p>msg: &#39;hello world&#39;</p>
+<p>})</p>
+<p>const count = ref(0)</p>
+<p>const changeMsg = () =&gt; {</p>
+<p>state.msg = &#39;world hello&#39;</p>
+<p>}</p>
+<p>return {</p>
+<p>state,</p>
+<p>count,</p>
+<p>changeMsg,</p>
+<p>}</p>
+<p>}</p>
+<p>}</p>
+<p>&lt;/script&gt;</p>
+<p>此时我们通过 [reactive API]{.mark} 或者 [ref<br>API]{.mark} 来定义响应式对象。</p>
+<p>对于 [reactive<br>API]{.mark} 而言，核心是用来定义集合类型的数据，比如：普通对象、数组和 [Map]{.mark}、[Set]{.mark}。</p>
+<p>对于 [ref<br>API]{.mark} 而言，可以用来对 [string]{.mark}、[number]{.mark}、[boolean]{.mark} 这些原始类型数据进行响应式定义。</p>
+<p>关于二者使用上的更多区别和差异，小伙伴们可以直接参见 [Vue<br>3]{.mark} 官网上<a href="https://link.juejin.cn/?target=https%3A%2F%2Fcn.vuejs.org%2Fguide%2Fessentials%2Freactivity-fundamentals.html">《响应式基础》</a>这个章节中的介绍。对于二者的核心实现原理，其实都是依托于 [Vue<br>3]{.mark} 的响应式基础，本小节将以 [reactive<br>API]{.mark} 作为切入点，核心分析 [Vue 3]{.mark} 的响应式原理。</p>
+<p><strong>Reactive</strong></p>
+<p>找到源码中关于 [reactive]{.mark} 部分的定义：</p>
+<p>export function reactive(target: object) {</p>
+<p>// 不需要对 readonly 的对象进行响应式</p>
+<p>if (isReadonly(target)) {</p>
+<p>return target</p>
+<p>}</p>
+<p>return createReactiveObject(</p>
+<p>target,</p>
+<p>false,</p>
+<p>mutableHandlers,</p>
+<p>mutableCollectionHandlers,</p>
+<p>reactiveMap</p>
+<p>)</p>
+<p>}</p>
+<p>这个函数核心也就是通过 [createReactiveObject]{.mark} 把我们传入的 [target]{.mark} 变成响应式的：</p>
+<p>function createReactiveObject(target, isReadonly,<br>baseHandlers, collectionHandlers, proxyMap) {</p>
+<p>// 如果目标不是对象，则直接返回</p>
+<p>if (!isObject(target)) {</p>
+<p>return target</p>
+<p>}</p>
+<p>// 已经是一个响应式对象了，也直接返回</p>
+<p>if (</p>
+<p>target[ReactiveFlags.RAW] &amp;&amp;</p>
+<p>!(isReadonly &amp;&amp; target[ReactiveFlags.IS_REACTIVE])</p>
+<p>) {</p>
+<p>return target</p>
+<p>}</p>
+<p>// proxyMap 中已经存入过 target，直接返回</p>
+<p>const existingProxy = proxyMap.get(target)</p>
+<p>if (existingProxy) {</p>
+<p>return existingProxy</p>
+<p>}</p>
+<p>// 只有特定类型的值才能被 observe.</p>
+<p>const targetType = getTargetType(target)</p>
+<p>if (targetType === TargetType.INVALID) {</p>
+<p>return target</p>
+<p>}</p>
+<p>// 通过 proxy 来构造一个响应式对象</p>
+<p>const proxy = new Proxy(</p>
+<p>target,</p>
+<p>targetType === TargetType.COLLECTION ? collectionHandlers : baseHandlers</p>
+<p>)</p>
+<p>// 缓存 target proxy</p>
+<p>proxyMap.set(target, proxy)</p>
+<p>return proxy</p>
+<p>}</p>
+<p>上述整个核心流程就是首先经过一系列判断，判断符合要求的 [target]{.mark} 才能被响应式，整理的判断包括了[target]{.mark} 的类型、是否是响应式的、是否已经被定义过了，以及是否是符合要求的类型这些步骤，最后执行的是 [new<br>Proxy()]{.mark} 这样的一个响应式代理 [API]{.mark}。一起来看看这个 [API]{.mark} 的实现：</p>
+<p> const proxy = new Proxy(</p>
+<p>target,</p>
+<p>targetType === TargetType.COLLECTION ? collectionHandlers : baseHandlers</p>
+<p>)</p>
+<p>[Proxy]{.mark} 根据 [targetType]{.mark} 来确定执行的是 [collectionHandlers]{.mark} 还是 [baseHandlers]{.mark}。那 [targetType]{.mark} 是什么时候确定的呢？可以看一下：</p>
+<p>const targetType = getTargetType(target)</p>
+<p>function getTargetType(value) {</p>
+<p>return value[ReactiveFlags.SKIP] || !Object.isExtensible(value)</p>
+<p>? TargetType.INVALID</p>
+<p>: targetTypeMap(toRawType(value))</p>
+<p>}</p>
+<p>export const toRawType = (value) =&gt; {</p>
+<p>// toTypeString 转换成字符串的方式，比如 &quot;[object RawType]&quot;</p>
+<p>return toTypeString(value).slice(8, -1)</p>
+<p>}</p>
+<p>function targetTypeMap(rawType) {</p>
+<p>switch (rawType) {</p>
+<p>case &#39;Object&#39;:</p>
+<p>case &#39;Array&#39;:</p>
+<p>return TargetType.COMMON</p>
+<p>case &#39;Map&#39;:</p>
+<p>case &#39;Set&#39;:</p>
+<p>case &#39;WeakMap&#39;:</p>
+<p>case &#39;WeakSet&#39;:</p>
+<p>return TargetType.COLLECTION</p>
+<p>default:</p>
+<p>return TargetType.INVALID</p>
+<p>}</p>
+<p>}</p>
+<p>因为 [target]{.mark} 传入进来的是一个 [Object]{.mark}，所以 [toRawType(value)]{.mark} 得到的值是 [Object]{.mark}。所以这里的 [targetType]{.mark} 的值等于 [TargetType.COMMON]{.mark} 也就是执行了 [baseHandlers]{.mark} 。而当我们的 [reactive(target)]{.mark} 中的 [target]{.mark} 是个 [WeakMap]{.mark} 或者 [WeakSet]{.mark} 时，那么执行的就是 [collectionHandlers]{.mark} 了。</p>
+<p>接下来看一下 [baseHandlers]{.mark} 的实现：</p>
+<p>export const mutableHandlers = {</p>
+<p>get,</p>
+<p>set,</p>
+<p>deleteProperty,</p>
+<p>has,</p>
+<p>ownKeys</p>
+<p>}</p>
+<p>这里就是 [Proxy]{.mark} 中的定义 [handler]{.mark} 的一些属性。</p>
+<p>get：属性读取操作的捕捉器。</p>
+<p>set：属性设置操作的捕捉器。</p>
+<p>deleteProperty：<a href="https://link.juejin.cn/?target=https%3A%2F%2Fdeveloper.mozilla.org%2Fzh-CN%2Fdocs%2FWeb%2FJavaScript%2FReference%2FOperators%2Fdelete">delete</a> 操作符的捕捉器。</p>
+<p>has：<a href="https://link.juejin.cn/?target=https%3A%2F%2Fdeveloper.mozilla.org%2Fzh-CN%2Fdocs%2FWeb%2FJavaScript%2FReference%2FOperators%2Fin">in</a> 操作符的捕捉器。</p>
+<p>ownKeys：<a href="https://link.juejin.cn/?target=https%3A%2F%2Fdeveloper.mozilla.org%2Fzh-CN%2Fdocs%2FWeb%2FJavaScript%2FReference%2FGlobal_Objects%2FObject%2FgetOwnPropertyNames">Object.getOwnPropertyNames</a> 方法和 <a href="https://link.juejin.cn/?target=https%3A%2F%2Fdeveloper.mozilla.org%2Fzh-CN%2Fdocs%2FWeb%2FJavaScript%2FReference%2FGlobal_Objects%2FObject%2FgetOwnPropertySymbols">Object.getOwnPropertySymbols</a> 方法的捕捉器。</p>
+<p>而关于响应式核心的部分就在 [set]{.mark} 和 [get]{.mark} 中，我们一起来看一下二者的定义实现。</p>
+<p><strong>1. get</strong></p>
+<p>其中 [get]{.mark} 的实现：</p>
+<p>const get = /*#__PURE__*/ createGetter()</p>
+<p>可以看到核心其实通过 [createGetter]{.mark} 来实现的：</p>
+<p>function createGetter(isReadonly = false, shallow = false) {</p>
+<p>return function get(target: Target, key: string | symbol, receiver:<br>object) {</p>
+<p>// 对 ReactiveFlags 的处理部分</p>
+<p>if (key === ReactiveFlags.IS_REACTIVE) {</p>
+<p>return !isReadonly</p>
+<p>} else if (key === ReactiveFlags.IS_READONLY) {</p>
+<p>return isReadonly</p>
+<p>} else if (key === ReactiveFlags.IS_SHALLOW) {</p>
+<p>return shallow</p>
+<p>} else if (</p>
+<p>key === ReactiveFlags.RAW &amp;&amp;</p>
+<p>receiver ===</p>
+<p>(isReadonly</p>
+<p>? shallow</p>
+<p>? shallowReadonlyMap</p>
+<p>: readonlyMap</p>
+<p>: shallow</p>
+<p>? shallowReactiveMap</p>
+<p>: reactiveMap</p>
+<p>).get(target)</p>
+<p>) {</p>
+<p>return target</p>
+<p>}</p>
+<p>const targetIsArray = isArray(target)</p>
+<p>if (!isReadonly) {</p>
+<p>// 数组的特殊方法处理</p>
+<p>if (targetIsArray &amp;&amp; hasOwn(arrayInstrumentations, key)) {</p>
+<p>return Reflect.get(arrayInstrumentations, key, receiver)</p>
+<p>}</p>
+<p>// 对象 hasOwnProperty 方法处理</p>
+<p>if (key === &#39;hasOwnProperty&#39;) {</p>
+<p>return hasOwnProperty</p>
+<p>}</p>
+<p>}</p>
+<p>// 取值</p>
+<p>const res = Reflect.get(target, key, receiver)</p>
+<p>// Symbol Key 不做依赖收集</p>
+<p>if (isSymbol(key) ? builtInSymbols.has(key) : isNonTrackableKeys(key)) {</p>
+<p>return res</p>
+<p>}</p>
+<p>// 进行依赖收集</p>
+<p>if (!isReadonly) {</p>
+<p>track(target, TrackOpTypes.GET, key)</p>
+<p>}</p>
+<p>// 如果是浅层响应，那么直接返回，不需要递归了</p>
+<p>if (shallow) {</p>
+<p>return res</p>
+<p>}</p>
+<p>if (isRef(res)) {</p>
+<p>// 跳过数组、整数 key 的展开</p>
+<p>return targetIsArray &amp;&amp; isIntegerKey(key) ? res : res.value</p>
+<p>}</p>
+<p>if (isObject(res)) {</p>
+<p>// 如果 isReadonly 是 true，那么直接返回 readonly(res)</p>
+<p>// 如果 res 是个对象或者数组类型，则递归执行 reactive 函数把 res<br>变成响应式</p>
+<p>return isReadonly ? readonly(res) : reactive(res)</p>
+<p>}</p>
+<p>return res</p>
+<p>}</p>
+<p>}</p>
+<p>因为调用 [createGetter]{.mark} 时，默认参数 [isReadonly =<br>false]{.mark}，所以这里可以先忽略 [isReadonly]{.mark} 的部分。整体而言，该函数还是比较通俗易懂的，首先对 [key]{.mark} 属于 [ReactiveFlags]{.mark} 的部分做了特殊处理，这也是为什么在 [createReactiveObject]{.mark} 函数中判断响应式对象是否存在 [ReactiveFlags.RAW]{.mark} 属性，如果存在就返回这个响应式对象本身。</p>
+<p>然后当我们的 [target]{.mark} 是数组，且 [key]{.mark} 值存在 [arrayInstrumentations]{.mark} 中时，返回 [arrayInstrumentations]{.mark} 中对应的 [key]{.mark} 值。再来看看 [arrayInstrumentations]{.mark} 是个什么：</p>
+<p>const arrayInstrumentations = createArrayInstrumentations()</p>
+<p>function createArrayInstrumentations() {</p>
+<p>const instrumentations = {};</p>
+<p>([&#39;includes&#39;, &#39;indexOf&#39;, &#39;lastIndexOf&#39;]).forEach(key =&gt; {</p>
+<p>instrumentations[key] = function (this, ...args) {</p>
+<p>// toRaw 可以把响应式对象转成原始数据</p>
+<p>const arr = toRaw(this)</p>
+<p>for (let i = 0, l = this.length; i &lt; l; i++) {</p>
+<p>// 对数组的每一项进行依赖收集</p>
+<p>track(arr, TrackOpTypes.GET, i + &#39;&#39;)</p>
+<p>}</p>
+<p>// 先尝试用参数本身，可能是响应式数据</p>
+<p>const res = arr[key](...args)</p>
+<p>if (res === -1 || res === false) {</p>
+<p>// 如果失败，再尝试把参数转成原始数据</p>
+<p>return arr[key](...args.map(toRaw))</p>
+<p>} else {</p>
+<p>return res</p>
+<p>}</p>
+<p>}</p>
+<p>})</p>
+<p>// instrument length-altering mutation methods to avoid length being<br>tracked</p>
+<p>// which leads to infinite loops in some cases (#2137)</p>
+<p>;([&#39;push&#39;, &#39;pop&#39;, &#39;shift&#39;, &#39;unshift&#39;, &#39;splice&#39;] as<br>const).forEach(key =&gt; {</p>
+<p>instrumentations[key] = function (this: unknown[], ...args:<br>unknown[]) {</p>
+<p>pauseTracking()</p>
+<p>const res = (toRaw(this) as any)[key].apply(this, args)</p>
+<p>resetTracking()</p>
+<p>return res</p>
+<p>}</p>
+<p>})</p>
+<p>return instrumentations</p>
+<p>}</p>
+<p>当[reactive]{.mark}函数传入数组时，[get]{.mark}捕获器会先在[arrayInstrumentations]{.mark}对象上查找，如果找不到，再在代理对象[target]{.mark}上查找。[arrayInstrumentations]{.mark}对象会重写两类函数，一类是查询类函数: [includes]{.mark}、 [indexOf]{.mark}、 [lastIndexOf]{.mark}，代表对数组的读取操作。在这些函数中会执行[track]{.mark}函数，对数组上的索引和[length]{.mark}属性进行追踪。</p>
+<p>一类是修改类函数[push]{.mark}、 [pop]{.mark}、 [shift]{.mark}、 [unshift]{.mark}、 [splice]{.mark}，代表对数组的修改操作，在这些函数中暂停了全局的追踪功能，防止某些情况下导致死循环。关于这里的一些说明也可以参见 <a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Fvuejs%2Fcore%2Fissues%2F2137">Vue<br>issue</a>。</p>
+<p>再回过头看 [createGetter]{.mark} 中，接下来的操作就是通过 [track(target,<br>TrackOpTypes.GET,<br>key)]{.mark} 进行依赖收集，我们再来一起看一下 [track]{.mark} 的实现：</p>
+<p>// 是否应该收集依赖</p>
+<p>let shouldTrack = true</p>
+<p>// 当前激活的 effect</p>
+<p>let activeEffect</p>
+<p>// 存放所有 reactive 传入的 receiver 容器</p>
+<p>const targetMap = new WeakMap()</p>
+<p>export function track(target, type, key) {</p>
+<p>if (shouldTrack &amp;&amp; activeEffect) {</p>
+<p>let depsMap = targetMap.get(target)</p>
+<p>if (!depsMap) {</p>
+<p>targetMap.set(target, (depsMap = new Map()))</p>
+<p>}</p>
+<p>let dep = depsMap.get(key)</p>
+<p>if (!dep) {</p>
+<p>depsMap.set(key, (dep = createDep()))</p>
+<p>}</p>
+<p>trackEffects(dep)</p>
+<p>}</p>
+<p>}</p>
+<p>export function trackEffects(</p>
+<p>dep,</p>
+<p>debuggerEventExtraInfo</p>
+<p>) {</p>
+<p>// ...</p>
+<p>if (shouldTrack) {</p>
+<p>// 把 activeEffect 添加到 dep 中</p>
+<p>dep.add(activeEffect!)</p>
+<p>activeEffect!.deps.push(dep)</p>
+<p>}</p>
+<p>}</p>
+<p>上面函数有点绕，其实核心就是在生成一个数据结构，什么样的数据结构呢？我们来画个图看看：</p>
+<p><img src="https://cdn-us.imgs.moe/2023/05/26/646f9dbdbc919.png" alt="截图.png"></p>
+<p>我们创建了全局的 [targetMap]{.mark} ，它的键是 [target]{.mark}，值是 [depsMap]{.mark}；这个 [depsMap]{.mark} 的键是 [target]{.mark} 的 [key]{.mark}，值是 [dep]{.mark} 集合，[dep]{.mark} 集合中存储的是依赖的副作用函数 [effect]{.mark}。</p>
+<p>另外，关于 [trackEffects]{.mark} 的实现细节，我们后面的小节再详细介绍。</p>
+<p>注意到 [Proxy]{.mark} 在访问对象属性时才递归执行劫持对象属性，相比 [Object.defineProperty]{.mark} 在定义时就遍历把所有层级的对象设置成响应式而言，在性能上有所提升。</p>
+<p><strong>2. set</strong></p>
+<p>上面说完了 [get]{.mark} 的流程，我们了解了依赖收集后的数据结构存储在了 [targetMap]{.mark} 中，接下来我们接着看 [set]{.mark} 的过程：</p>
+<p>const set = /*#__PURE__*/ createSetter()</p>
+<p>可以看到核心其实通过 [createSetter]{.mark} 来实现的：</p>
+<p>function createSetter(shallow = false) {</p>
+<p>return function set(target, key, value, receiver) {</p>
+<p>let oldValue = target[key]</p>
+<p>// 不是浅层响应式，这里默认是 false</p>
+<p>if (!shallow) {</p>
+<p>// 不是浅层响应式对象</p>
+<p>if (!isShallow(value) &amp;&amp; !isReadonly(value)) {</p>
+<p>oldValue = toRaw(oldValue)</p>
+<p>value = toRaw(value)</p>
+<p>}</p>
+<p>// ...</p>
+<p>} else {</p>
+<p>// 在浅模式中，对象被设置为原始值，而不管是否是响应式</p>
+<p>}</p>
+<p>const hadKey =</p>
+<p>isArray(target) &amp;&amp; isIntegerKey(key)</p>
+<p>? Number(key) &lt; target.length</p>
+<p>: hasOwn(target, key)</p>
+<p>const result = Reflect.set(target, key, value, receiver)</p>
+<p>// 如果目标的原型链也是一个 proxy，通过 Reflect.set<br>修改原型链上的属性会再次触发 setter，这种情况下就没必要触发两次 trigger<br>了</p>
+<p>if (target === toRaw(receiver)) {</p>
+<p>if (!hadKey) {</p>
+<p>trigger(target, TriggerOpTypes.ADD, key, value)</p>
+<p>} else if (hasChanged(value, oldValue)) {</p>
+<p>trigger(target, TriggerOpTypes.SET, key, value, oldValue)</p>
+<p>}</p>
+<p>}</p>
+<p>return result</p>
+<p>}</p>
+<p>}</p>
+<p>可以看到 [set]{.mark} 的核心逻辑是先根据是否是浅层响应式来确定原始值和新值，这里默认不是浅层的响应式，所以会先把原始值和新值进行 [toRaw]{.mark} 转换，然后通过 [Reflect.set]{.mark} 设置值，最后通过 [trigger]{.mark} 函数派发通知<br>，并依据 [key]{.mark} 是否存在于 [target]{.mark} 上来确定通知类型是 [add]{.mark}（新增）<br>还是 [set]{.mark}（修改）。</p>
+<p>接下来核心就是 [trigger]{.mark} 的逻辑，是如何实现触发响应的:</p>
+<p>export function<br>trigger(target,type,key,newValue,oldValue,oldTarget) {</p>
+<p>const depsMap = targetMap.get(target)</p>
+<p>if (!depsMap) {</p>
+<p>return</p>
+<p>}</p>
+<p>let deps: (Dep | undefined)[] = []</p>
+<p>if (type === TriggerOpTypes.CLEAR) {</p>
+<p>deps = [...depsMap.values()]</p>
+<p>} else if (key === &#39;length&#39; &amp;&amp; isArray(target)) {</p>
+<p>depsMap.forEach((dep, key) =&gt; {</p>
+<p>if (key === &#39;length&#39; || key &gt;= toNumber(newValue)) {</p>
+<p>deps.push(dep)</p>
+<p>}</p>
+<p>})</p>
+<p>} else {</p>
+<p>if (key !== void 0) {</p>
+<p>deps.push(depsMap.get(key))</p>
+<p>}</p>
+<p>switch (type) {</p>
+<p>case TriggerOpTypes.ADD:</p>
+<p>if (!isArray(target)) {</p>
+<p>deps.push(depsMap.get(ITERATE_KEY))</p>
+<p>if (isMap(target)) {</p>
+<p>deps.push(depsMap.get(MAP_KEY_ITERATE_KEY))</p>
+<p>}</p>
+<p>} else if (isIntegerKey(key)) {</p>
+<p>deps.push(depsMap.get(&#39;length&#39;))</p>
+<p>}</p>
+<p>break</p>
+<p>case TriggerOpTypes.DELETE:</p>
+<p>if (!isArray(target)) {</p>
+<p>deps.push(depsMap.get(ITERATE_KEY))</p>
+<p>if (isMap(target)) {</p>
+<p>deps.push(depsMap.get(MAP_KEY_ITERATE_KEY))</p>
+<p>}</p>
+<p>}</p>
+<p>break</p>
+<p>case TriggerOpTypes.SET:</p>
+<p>if (isMap(target)) {</p>
+<p>deps.push(depsMap.get(ITERATE_KEY))</p>
+<p>}</p>
+<p>break</p>
+<p>}</p>
+<p>}</p>
+<p>if (deps.length === 1) {</p>
+<p>if (deps[0]) {</p>
+<p>triggerEffects(deps[0])</p>
+<p>}</p>
+<p>} else {</p>
+<p>const effects: ReactiveEffect[] = []</p>
+<p>for (const dep of deps) {</p>
+<p>if (dep) {</p>
+<p>effects.push(...dep)</p>
+<p>}</p>
+<p>}</p>
+<p>triggerEffects(createDep(effects))</p>
+<p>}</p>
+<p>}</p>
+<p>内容有点多，看起来有点头大，我们来简化一下：</p>
+<p>export function trigger(target, type, key) {</p>
+<p>const dep = targetMap.get(target)</p>
+<p>dep.get(key).forEach(effect =&gt; effect.run())</p>
+<p>}</p>
+<p>核心其实就是通过 [target]{.mark} 找到 [targetMap]{.mark} 中的 [dep]{.mark}，再根据 [key]{.mark} 来找到所有的副作用函数 [effect]{.mark} 遍历执行。副作用函数就是上面 [get]{.mark} 收集起来的。</p>
+<p>这里有个有意思的地方是对数组的操作监听，我们来看一段代码：</p>
+<p>const state = reactive([]);</p>
+<p>effect(() =&gt; {</p>
+<p>console.log(`state: ${state[1]}`)</p>
+<p>});</p>
+<p>// 不会触发 effect</p>
+<p>state.push(0);</p>
+<p>// 触发 effect</p>
+<p>state.push(1);</p>
+<p>上面的 [demo]{.mark} 中，我们第一次访问了 [state[1]]{.mark}，<br>所以，对 [state[1]]{.mark} 进行了依赖收集，而第一次的 [state.push(0)]{.mark} 设置的是 [state]{.mark} 的第 [0]{.mark} 个元素，所以不会触发响应式更新。而第二次的 [push]{.mark} 触发了对 [state[1]]{.mark} 的更新。这看起来很合理，没啥问题。那么我们再来看另外一个示例：</p>
+<p>// 响应式数据</p>
+<p>const state = reactive([])</p>
+<p>// 观测变化</p>
+<p>effect(() =&gt; console.log(&#39;state map: &#39;, state.map(item =&gt; item))</p>
+<p>state.push(1)</p>
+<p>按照常理来说，[state.map]{.mark} 由于 [state]{.mark} 是个空数组，所以理论上不会对数组的每一项进行访问，所以 [state.push(1)]{.mark} 理论上也不会触发 [effect]{.mark}。但实际上是会的，为什么呢？我们再来看一下一个 [proxy]{.mark} 的 [demo]{.mark}：</p>
+<p>const raw = []</p>
+<p>const arr = new Proxy(raw, {</p>
+<p>get(target, key) {</p>
+<p>console.log(&#39;get&#39;, key)</p>
+<p>return Reflect.get(target, key)</p>
+<p>},</p>
+<p>set(target, key, value) {</p>
+<p>console.log(&#39;set&#39;, key)</p>
+<p>return Reflect.set(target, key, value)</p>
+<p>}</p>
+<p>})</p>
+<p>arr.map(v =&gt; v)</p>
+<p>可以看到打印的内容如下：</p>
+<p>get map</p>
+<p>get length</p>
+<p>get constructor</p>
+<p>可以看到 [map]{.mark} 函数的操作，会触发对数组的 [length]{.mark} 访问！这就有意思了，当访问数组 [length]{.mark} 的时候，我们进行了对 [state]{.mark} 的依赖收集，而数组的 [push]{.mark} 操作也会改变 [length]{.mark} 的长度，如果我们对 [length]{.mark} 做监听，那么此时便会触发 [effect]{.mark}！而 [Vue]{.mark} 也是这么做的，也就是这段代码：</p>
+<p>deps.push(depsMap.get(&#39;length&#39;))</p>
+<p>同理，对于 [for in, forEach, map<br>... ]{.mark}都会触发 [length]{.mark} 的依赖收集，从而 [pop, push,<br>shift...]{.mark} 等等操作都会触发响应式更新！</p>
+<p>另外，除了数组，对象的 [Object.keys]{.mark} , [for ... of<br>...]{.mark} 等等对象遍历操作都会触发响应式的依赖收集，这是因为 [Vue]{.mark} 在定义 [Proxy]{.mark} 的时候，定义了 [ownKeys]{.mark} 这个函数：</p>
+<p>function ownKeys(target) {</p>
+<p>track(target, TrackOpTypes.ITERATE, isArray(target) ? &#39;length&#39; :<br>ITERATE_KEY)</p>
+<p>return Reflect.ownKeys(target)</p>
+<p>}</p>
+<p>[ownKeys]{.mark} 函数内部执行了 [track]{.mark} 进行了对 [Object]{.mark} 的 [ITERATE_KEY]{.mark} 的依赖收集。而在 [setter]{.mark} 的时候，则对 [ITERATE_KEY]{.mark} 进行了响应式触发：</p>
+<p>deps.push(depsMap.get(ITERATE_KEY))</p>
+<p><strong>总结</strong></p>
+<p>至此，我们讲完了对响应式的依赖收集和触发过程，但有个概览我们没有说清楚，那就是 [effect]{.mark} 到底是什么，以及是如何产生的被收集到 [dep]{.mark} 当中的。下一节我们将具体介绍。</p>
+<p><strong>课外知识</strong></p>
+<p>这里细心的小伙伴，可能会注意到在上面的源码中出现了一个有意思的标识符 [/*#__PURE__*/]{.mark}。要说这个东西，那就需要说到和这玩意相关的 [Tree-Shaking]{.mark} 副作用了。我们知道 [Tree-Shaking]{.mark} 可以删除一些 [DC（dead<br>code）]{.mark} 代码。但是对于一些有副作用的函数代码，却是无法进行很好的识别和删除，举个例子：</p>
+<p>foo()</p>
+<p>function foo(obj) {</p>
+<p>obj?.a</p>
+<p>}</p>
+<p>上述代码中，[foo]{.mark} 函数本身是没有任何意义的，仅仅是对对象 [obj]{.mark} 进行了属性 [a]{.mark} 的读取操作，但是 [Tree-Shaking]{.mark} 是无法删除该函数的，因为上述的属性读取操作可能会产生副作用，因为 [obj]{.mark} 可能是一个响应式对象，我们可能对 [obj]{.mark} 定了一个 [getter]{.mark} 在 [getter]{.mark} 中触发了很多不可预期的操作。</p>
+<p>如果我们确认 [foo]{.mark} 函数是一个不会有副作用的<strong>纯净的函数</strong>，那么这个时候 [/*#__PURE__*/]{.mark} 就派上用场了，其作用就是<strong>告诉打包器，对于 [foo]{.mark} 函数的调用不会产生副作用，你可以放心地对其进行 [Tree-Shaking]{.mark}</strong>。</p>
+<p>另外，值得一提的是，在 [Vue<br>3]{.mark} 源码中，包含了大量的 [/*#__PURE__*/]{.mark} 标识符，可见 [Vue<br>3]{.mark} 对源码体积的控制是多么的用心！</p>
+</div><div class="article-tags size-small is-uppercase mb-4"><i class="fas fa-tags has-text-grey"></i> <a class="link-muted mr-2" rel="tag" href="/tags/%E5%89%8D%E7%AB%AF/">前端</a></div><div class="recommend-post"><span class="is-size-6 has-text-grey has-mr-7"># 推荐文章</span><br><span>  1.<a class="is-size-6" href="/posts/39441e6f/" target="_blank">响应式原理：Vue 3 的 nextTick ？</a><br></span><span>  2.<a class="is-size-6" href="/posts/91e84f90/" target="_blank">响应式原理：副作用函数探秘</a><br></span><span>  3.<a class="is-size-6" href="/posts/bf54f4c/" target="_blank">响应式原理：基于 Proxy 的响应式是什么样的？</a><br></span><span>  4.<a class="is-size-6" href="/posts/16c5c5d5/" target="_blank">渲染器：数组子节点的 diff 算法</a><br></span><span>  5.<a class="is-size-6" href="/posts/8d428288/" target="_blank">渲染器：组件是如何完成更新的？</a><br></span></div></article></div><div class="card"><div class="card-content"><h3 class="menu-label has-text-centered">喜欢这篇文章？打赏一下作者吧</h3><div class="buttons is-centered"><a class="button is-info donate"><span class="icon is-small"><i class="fab fa-alipay"></i></span><span>支付宝</span><span class="qrcode"><img src="https://cdn-us.imgs.moe/2023/05/26/646fb97e763cc.jpg" alt="支付宝"></span></a><a class="button is-success donate"><span class="icon is-small"><i class="fab fa-weixin"></i></span><span>微信</span><span class="qrcode"><img src="https://cdn-us.imgs.moe/2023/05/26/646fb97e763da.jpg" alt="微信"></span></a></div></div></div><nav class="post-navigation mt-4 level is-mobile"><div class="level-start"><a class="article-nav-prev level level-item link-muted" href="/posts/91e84f90/"><i class="level-item fas fa-chevron-left"></i><span class="level-item">响应式原理：副作用函数探秘</span></a></div><div class="level-end"><a class="article-nav-next level level-item link-muted" href="/posts/16c5c5d5/"><span class="level-item">渲染器：数组子节点的 diff 算法</span><i class="level-item fas fa-chevron-right"></i></a></div></nav></div><div class="column column-left is-4-tablet is-4-desktop is-4-widescreen  order-1 is-sticky"><!--!--><div class="card widget"><div class="card-content"><nav class="level"><div class="level-item has-text-centered flex-shrink-1"><div><figure class="image is-128x128 mx-auto mb-2"><img class="is-rounded" src="https://p3-passport.byteimg.com/img/user-avatar/d8bc7351ac3c93b11cd3146be24a0cba~100x100.awebp" alt="爷ゝ本霸气っ"></figure><p class="title is-size-4 is-block line-height-inherit">爷ゝ本霸气っ</p><p class="is-size-6 is-block">我欲乘风去，昔年化龙归</p><p class="is-size-6 is-flex justify-content-center"><i class="fas fa-map-marker-alt mr-1"></i><span>鹏城</span></p></div></div></nav><nav class="level is-mobile"><div class="level-item has-text-centered is-marginless"><div><p class="heading">文章</p><a href="/archives"><p class="title">22</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">分类</p><a href="/categories"><p class="title">7</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">标签</p><a href="/tags"><p class="title">6</p></a></div></div></nav><hr><p id="hitokoto">:D 舔狗日记获取中...</p><script type="text/javascript" defer>
+                                // 获取舔狗日记
+                                const randomTianDogData = function (list) {
+                                    // 随机取出一个元素
+                                    const randomIndex = Math.floor(Math.random() * list.length); // 生成 0 到 list.length-1 之间的整数
+                                    return list[randomIndex]; // 根据随机下标获取数组中的元素
+                                }
+                                // 获取年月日
+                                const randomTianDogDate = function () {
+                                    // 获取 1970 年 1 月 1 日至今的毫秒数范围
+                                    const minTimestamp = new Date('2020-01-01').getTime();
+                                    const maxTimestamp = new Date().getTime();
+                        
+                                    // 生成指定范围内的随机日期
+                                    const randomTimestamp = Math.floor(Math.random() * (maxTimestamp - minTimestamp)) + minTimestamp;
+                                    const randomDate = new Date(randomTimestamp);
+                        
+                                    // 获取随机日期的年、月、日
+                                    const year = randomDate.getFullYear();
+                                    const month = randomDate.getMonth() + 1;
+                                    const day = randomDate.getDate();
+                        
+                                    return year + '-' + month + '-' + day // 输出随机的年月日
+                                }
+
+                                function getYiyan(){
+                                    $.when(
+                                      $.getJSON('http://111.230.213.88/mockData/weathers.json'),
+                                      $.getJSON('http://111.230.213.88/mockData/diaries.json')
+                                    ).done(function(data1, data2) {
+                                      // 在这里对两个接口的数据进行操作
+                                      $('#hitokoto').html("");
+                                      $('#hitokoto').append(
+                                        "<p>" + randomTianDogDate() + "</p><p>" + randomTianDogData(data1[0]) + "</p>" +
+                                        "<strong style='color: #3273dc;'>" + randomTianDogData(data2[0]) + "</strong>"
+                                      );  
+                                    }).fail(function() {
+                                      console.log('Error: 舔狗日记获取失败.');
+                                    });
+                                }
+                                $(function (){getYiyan();$('#hitokoto').click(function(){getYiyan();})});</script></div></div><!--!--><div class="card widget"><div class="card-content"><h3 class="menu-label">最新文章</h3><article class="media"><a class="media-left" href="/posts/658c93f2/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646fa77438c98.png" alt="模块标准：为什么 ESM 是前端模块化的未来？"></p></a><div class="media-content size-small"><p><time dateTime="2022-09-17T11:13:16.000Z">2022-09-17</time></p><p class="title is-6"><a class="link-muted" href="/posts/658c93f2/">模块标准：为什么 ESM 是前端模块化的未来？</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAVite/">深入浅出Vite</a></p></div></article><article class="media"><a class="media-left" href="/posts/e76f424e/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646fa4ee2fa1b.png" alt="让 Vite 助力你的前端工程化之路"></p></a><div class="media-content size-small"><p><time dateTime="2022-09-07T11:13:16.000Z">2022-09-07</time></p><p class="title is-6"><a class="link-muted" href="/posts/e76f424e/">让 Vite 助力你的前端工程化之路</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAVite/">深入浅出Vite</a></p></div></article><article class="media"><a class="media-left" href="/posts/39441e6f/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646f9fde778cf.png" alt="响应式原理：Vue 3 的 nextTick ？"></p></a><div class="media-content size-small"><p><time dateTime="2022-08-27T11:13:16.000Z">2022-08-27</time></p><p class="title is-6"><a class="link-muted" href="/posts/39441e6f/">响应式原理：Vue 3 的 nextTick ？</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/">深入Vue3原理</a></p></div></article><article class="media"><a class="media-left" href="/posts/91e84f90/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646f9fde38e7e.png" alt="响应式原理：副作用函数探秘"></p></a><div class="media-content size-small"><p><time dateTime="2022-08-17T11:13:16.000Z">2022-08-17</time></p><p class="title is-6"><a class="link-muted" href="/posts/91e84f90/">响应式原理：副作用函数探秘</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/">深入Vue3原理</a></p></div></article><article class="media"><a class="media-left" href="/posts/bf54f4c/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646f9dbdbc919.png" alt="响应式原理：基于 Proxy 的响应式是什么样的？"></p></a><div class="media-content size-small"><p><time dateTime="2022-08-07T11:13:16.000Z">2022-08-07</time></p><p class="title is-6"><a class="link-muted" href="/posts/bf54f4c/">响应式原理：基于 Proxy 的响应式是什么样的？</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/">深入Vue3原理</a></p></div></article></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">分类</h3><ul class="menu-list"><li><a class="level is-mobile is-marginless" href="/categories/%E5%89%8D%E7%AB%AF/"><span class="level-start"><span class="level-item">前端</span></span><span class="level-end"><span class="level-item tag">10</span></span></a><ul class="mr-0"><li><a class="level is-mobile is-marginless" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/"><span class="level-start"><span class="level-item">深入Vue3原理</span></span><span class="level-end"><span class="level-item tag">8</span></span></a></li><li><a class="level is-mobile is-marginless" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAVite/"><span class="level-start"><span class="level-item">深入浅出Vite</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li></ul></li><li><a class="level is-mobile is-marginless" href="/categories/%E5%B7%A5%E5%85%B7%E6%95%99%E7%A8%8B/"><span class="level-start"><span class="level-item">工具教程</span></span><span class="level-end"><span class="level-item tag">4</span></span></a><ul class="mr-0"><li><a class="level is-mobile is-marginless" href="/categories/%E5%B7%A5%E5%85%B7%E6%95%99%E7%A8%8B/%E4%B8%BB%E9%A2%98%E5%B7%A5%E5%85%B7/"><span class="level-start"><span class="level-item">主题工具</span></span><span class="level-end"><span class="level-item tag">4</span></span></a></li></ul></li><li><a class="level is-mobile is-marginless" href="/categories/%E6%96%87%E7%AB%A0%E5%8A%A0%E5%AF%86/"><span class="level-start"><span class="level-item">文章加密</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/categories/%E6%B3%95%E5%BE%8B/"><span class="level-start"><span class="level-item">法律</span></span><span class="level-end"><span class="level-item tag">7</span></span></a></li></ul></div></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">归档</h3><ul class="menu-list"><li><a class="level is-mobile is-marginless" href="/archives/2022/09/"><span class="level-start"><span class="level-item">九月 2022</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2022/08/"><span class="level-start"><span class="level-item">八月 2022</span></span><span class="level-end"><span class="level-item tag">3</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2022/07/"><span class="level-start"><span class="level-item">七月 2022</span></span><span class="level-end"><span class="level-item tag">3</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2022/06/"><span class="level-start"><span class="level-item">六月 2022</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2020/01/"><span class="level-start"><span class="level-item">一月 2020</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><a class="level is-mobile is-marginless" href="/archives/"><span class="level-start"><span class="level-item">查看全部&gt;&gt;</span></span></a></ul></div></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">标签</h3><div class="field is-grouped is-grouped-multiline"><div class="control"><a class="tags has-addons" href="/tags/%E5%89%8D%E7%AB%AF/"><span class="tag">前端</span><span class="tag is-grey-lightest">10</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E6%B3%95%E5%BE%8B/"><span class="tag">法律</span><span class="tag is-grey-lightest">7</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E5%B7%A5%E5%85%B7%E6%95%99%E7%A8%8B/"><span class="tag">工具教程</span><span class="tag is-grey-lightest">3</span></a></div><div class="control"><a class="tags has-addons" href="/tags/hexo%E4%B8%BB%E9%A2%98/"><span class="tag">hexo主题</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/icarus%E4%B8%BB%E9%A2%98%E9%85%8D%E7%BD%AE/"><span class="tag">icarus主题配置</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E5%8A%A0%E5%AF%86%E6%96%87%E7%AB%A0/"><span class="tag">加密文章</span><span class="tag is-grey-lightest">1</span></a></div></div></div></div></div><!--!--></div></div></div></section><footer class="footer"><div class="container"><div class="level"><div class="level-start"><a class="footer-logo is-block mb-2" href="/"><img src="https://s1.ax1x.com/2023/05/25/p9H4zND.png" alt="爷ゝ本霸气っ" height="28"></a><p class="size-small"><span>&copy; 2023 爷ゝ本霸气っ</span>  Powered by <a href="https://hexo.io/" target="_blank">Hexo</a> &amp; <a href="https://github.com/ppoffice/hexo-theme-icarus" target="_blank">Icarus</a>,Modify by <a href="https://github.com/Leon9916/hexo-blog" target="_blank">removeif</a> <br>© 版权2说明：[本网站所有内容均收集于互联网或自己创作,<br>    方便于自己学习交流，如有侵权，请<a href="mailto:2476288442@qq.com">联系</a>，立即处理]<br><script type="text/javascript" src="/js/statistics.js"></script><span id="statistic-times">网站运行时间统计加载中...</span></p></div><div class="level-end"></div></div></div></footer><script src="https://cdn.jsdelivr.net/npm/moment@2.22.2/min/moment-with-locales.min.js"></script><script>moment.locale("zh-CN");</script><script>var IcarusThemeSettings = {
+            site: {
+                url: 'https://removeif.github.io',
+                external_link: {"enable":true,"exclude":[]}
+            },
+            article: {
+                highlight: {
+                    clipboard: true,
+                    fold: 'unfolded'
+                }
+            }
+        };</script><script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.4/dist/clipboard.min.js" defer></script><script src="/js/animation.js"></script><a id="back-to-top" title="回到顶端" href="javascript:;"><i class="fas fa-chevron-up"></i></a><script src="/js/back-to-top.js" defer></script><!--!--><!--!--><script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/js/lightgallery.min.js" defer></script><script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js" defer></script><script src="/js/gallery.js" defer></script><!--!--><!--!--><!--!--><script src="/js/main.js" defer></script><script src="/js/comment-issue-data.js" defer></script><link rel="stylesheet" href="/css/insight.css"><div class="searchbox ins-search"><div class="searchbox-container ins-search-container"><div class="searchbox-input-wrapper"><input class="searchbox-input ins-search-input" type="text" placeholder="想要查找什么..."><span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span></div><div class="searchbox-result-wrapper ins-section-wrapper"><div class="ins-section-container"></div></div></div></div><script>(function (window) {
+            var INSIGHT_CONFIG = {
+                TRANSLATION: {
+                    POSTS: '文章',
+                    PAGES: '页面',
+                    CATEGORIES: '分类',
+                    TAGS: '标签',
+                    UNTITLED: '(无标题)',
+                },
+                CONTENT_URL: '/content.json',
+            };
+            window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+        })(window);</script><script src="/js/insight.js" defer></script></body></html>

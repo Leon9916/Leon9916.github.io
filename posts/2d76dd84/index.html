@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="generator" content="Hexo 4.2.1"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta><title>渲染器：组件是如何被渲染成 DOM 的 - 爷ゝ本霸气っ</title><meta description="技术分享,前端开发,数据接口,算法"><meta property="og:type" content="blog"><meta property="og:title" content="爷ゝ本霸气っ"><meta property="og:url" content="https://removeif.github.io/"><meta property="og:site_name" content="爷ゝ本霸气っ"><meta property="og:description" content="技术分享,前端开发,数据接口,算法"><meta property="og:locale" content="zh_CN"><meta property="og:image" content="https://p3-passport.byteimg.com/img/user-avatar/d8bc7351ac3c93b11cd3146be24a0cba~100x100.awebp"><meta property="article:published_time" content="2022-06-27T11:13:16.000Z"><meta property="article:modified_time" content="2023-05-25T17:18:40.699Z"><meta property="article:author" content="removeif"><meta property="article:tag" content="categories-tool"><meta property="twitter:card" content="summary"><meta property="twitter:image" content="https://p3-passport.byteimg.com/img/user-avatar/d8bc7351ac3c93b11cd3146be24a0cba~100x100.awebp"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://removeif.github.io/"},"headline":"爷ゝ本霸气っ","image":[],"datePublished":"2022-06-27T11:13:16.000Z","dateModified":"2023-05-25T17:18:40.699Z","author":{"@type":"Person","name":"removeif"},"description":"技术分享,前端开发,数据接口,算法"}</script><link rel="alternative" href="/atom.xml" title="爷ゝ本霸气っ" type="application/atom+xml"><link rel="icon" href="https://p3-passport.byteimg.com/img/user-avatar/d8bc7351ac3c93b11cd3146be24a0cba~100x100.awebp"><link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.0/css/all.css"><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu:400,600|Source+Code+Pro"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@9.12.0/styles/atom-one-dark.css"><link rel="stylesheet" href="//fonts.googleapis.com/css?family=Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Microsoft YaHei:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&amp;amp;subset=latin,latin-ext"><style>body>.footer,body>.navbar,body>.section{opacity:1}</style><!--!--><!--!--><script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" defer></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/css/justifiedGallery.min.css"><!--!--><!--!--><script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script><link rel="stylesheet" href="/css/style.css"><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script><script src="/js/globalUtils.js"></script><link rel="stylesheet" href="/live2d/waifu.css"><script type="text/javascript" async src="/live2d/autoload.js"></script></head><body class="is-3-column has-navbar-fixed-top"><nav class="navbar navbar-main is-fixed-top"><div class="container"><div class="navbar-brand justify-content-center"><a class="navbar-item navbar-logo" href="/"><img src="https://s1.ax1x.com/2023/05/25/p9H4zND.png" alt="爷ゝ本霸气っ" height="28"></a></div><div class="navbar-menu"><div class="navbar-start"><a class="navbar-item" href="/">首页</a><a class="navbar-item" href="/categories">分类</a><a class="navbar-item" href="/media">影音</a><a class="navbar-item" href="/album">相册</a><a class="navbar-item" href="/about">关于</a><a class="navbar-item" href="/chat_brother">Chat哥</a></div><div class="navbar-end"><a class="navbar-item" target="_blank" rel="noopener" title="Download on GitHub" href="https://github.com/Leon9916/hexo-blog"><i class="fab fa-github"></i></a><a class="navbar-item is-hidden-tablet catalogue" title="目录" href="javascript:;"><i class="fas fa-list-ul"></i></a><a class="navbar-item search" title="搜索" href="javascript:;"><i class="fas fa-search"></i></a><a class="navbar-item" id="night-nav" title="Night Mode" href="javascript:;"><i class="fas fa-moon" id="night-icon"></i></a></div></div></div></nav><script type="text/javascript" src="/js/theme-setting.js"></script><section class="section"><div class="container"><div class="columns"><div class="column order-2 column-main is-8-tablet is-8-desktop is-9-widescreen"><div class="card"><div class="card-image"><span class="image is-7by3"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646f8bc3d6bde.png" alt="渲染器：组件是如何被渲染成 DOM 的"></span></div><article class="card-content article" role="article"><div class="article-meta size-small is-uppercase level is-mobile"><div class="level-left"><span class="level-item"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a><span> / </span><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/">深入Vue3原理</a></span><span class="level-item">30 分钟 读完 (大约 4430 个字)</span></div></div><h1 class="title is-3 is-size-4-mobile">渲染器：组件是如何被渲染成 DOM 的</h1><div class="content"><blockquote>
+<p>相对于传统的 [jQuery]{.mark} 一把梭子撸到底的开发模式，组件化可以帮助我们实现 [视图]{.mark} 和 [逻辑]{.mark} 的复用，并且可以对每个部分进行单独的思考</p>
+</blockquote>
+<a id="more"></a>
+
+<p><strong>前言</strong></p>
+<p>相对于传统的 [jQuery]{.mark} 一把梭子撸到底的开发模式，组件化可以帮助我们实现 [视图]{.mark} 和 [逻辑]{.mark} 的复用，并且可以对每个部分进行单独的思考。对于一个大型的 [Vue.js]{.mark} 应用，通常是由一个个组件组合而成：</p>
+<p><img src="https://cdn-us.imgs.moe/2023/05/26/646f8bc3d6bde.png" alt="stickPicture.png"></p>
+<p>但是我们实际访问的页面，是由 [DOM]{.mark} 元素构成的，而组件的 [&lt;template&gt;]{.mark} 中的内容只是一个模板字符串而已。那模板字符串是如何被渲染成 [DOM]{.mark} 的呢？接下来我们将从组件入手，揭秘 [Vue]{.mark} 的组件是如何被渲染成真实的 [DOM]{.mark} 的。</p>
+<p><strong>初始化一个 Vue 3 应用</strong></p>
+<p>在开始本章节之前，我们先来简单初始化一个 [Vue 3]{.mark} 的应用：</p>
+<p>shell复制代码# 安装 vue cli</p>
+<p>$ yarn global add @vue/cli</p>
+<p># 创建 vue3 的基础脚手架 一路回车</p>
+<p>$ vue create vue3-demo</p>
+<p>接下来，打开项目，可以看到[Vue.js]{.mark} 的入口文件 [main.js]{.mark} 的内容如下：</p>
+<p>import { createApp } from &#39;vue&#39;</p>
+<p>import App from &#39;./App.vue&#39;</p>
+<p>createApp(App).mount(&#39;#app&#39;)</p>
+<p>这里就有一个根组件 [App.vue]{.mark}。为了更加简单地介绍 [Vue]{.mark} 根组件的渲染过程，我把 [App.vue]{.mark} 根组件进行了一个简单的修改：</p>
+<p>html复制代码&lt;template&gt;</p>
+<p>&lt;div class=&quot;helloWorld&quot;&gt;</p>
+<p>hello world</p>
+<p>&lt;/div&gt;</p>
+<p>&lt;/template&gt;</p>
+<p>&lt;script&gt;</p>
+<p>export default {</p>
+<p>setup() {</p>
+<p>// ...</p>
+<p>}</p>
+<p>}</p>
+<p>&lt;/script&gt;</p>
+<p><strong>根组件模板编译</strong></p>
+<p>我们知道 [.vue]{.mark} 类型的文件无法在 [Web]{.mark} 端直接加载，我们通常会在 [webpack]{.mark} 的编译阶段，通过 [vue-loader]{.mark} 编译生成组件相关的 [JavaScript]{.mark} 和 [CSS]{.mark}，并把 [template]{.mark} 部分编译转换成 [render]{.mark} 函数添加到组件对象的属性中。</p>
+<p>上述的 [App.vue]{.mark} 文件内的模板其实是会被编译工具在编译时转成一个渲染函数，大致如下：</p>
+<p>import { openBlock as _openBlock, createElementBlock as<br>_createElementBlock } from &quot;vue&quot;</p>
+<p>const _hoisted_1 = { class: &quot;helloWorld&quot; }</p>
+<p>export function render(_ctx, _cache, $props, $setup, $data,<br>$options) {</p>
+<p>return (_openBlock(), _createElementBlock(&quot;div&quot;, _hoisted_1, &quot;<br>hello world &quot;))</p>
+<p>}</p>
+<p>关于 [&lt;template&gt;]{.mark} 中的模板字符串是如何被编译成 [render]{.mark} 函数的，以及 [_hoisted_1]{.mark} 是个什么玩意，我们将在后续章节中详细介绍。</p>
+<p>现在我们只需要知道 [&lt;script&gt;]{.mark} 中的对象内容最终会和编译后的模板内容一起，生成一个 [App]{.mark} 对象传入 [createApp]{.mark} 函数中：</p>
+<p>{</p>
+<p>render(_ctx, _cache, $props, $setup, $data, $options) {</p>
+<p>// ...</p>
+<p>},</p>
+<p>setup() {</p>
+<p>// ...</p>
+<p>}</p>
+<p>}</p>
+<p><strong>对象组件渲染成真实的 DOM</strong></p>
+<p>接着回到 [main.js]{.mark} 的入口文件，整个初始化的过程只剩下如下部分了：</p>
+<p>createApp(App).mount(&#39;#app&#39;)</p>
+<p>打开源码，可以看一下 [createApp]{.mark} 的过程：</p>
+<p>// packages/runtime-dom/src/index.ts</p>
+<p>export const createApp = (...args) =&gt; {</p>
+<p>const app = ensureRenderer().createApp(...args);</p>
+<p>// ...</p>
+<p>return app;</p>
+<p>};</p>
+<p>猜测一下，[ensureRenderer().createApp(...args)]{.mark} 这个链式函数执行完成后肯定返回了 [mount]{.mark} 函数，[ensureRenderer]{.mark} 就是构造了一个带有 [createApp]{.mark} 函数的<strong>渲染器<br>renderer 对象</strong> ：</p>
+<p>// packages/runtime-dom/src/index.ts</p>
+<p>function ensureRenderer() {</p>
+<p>// 如果 renderer 有值的话，那么以后都不会初始化了</p>
+<p>return (</p>
+<p>renderer ||</p>
+<p>(renderer = createRenderer(rendererOptions)</p>
+<p>)</p>
+<p>}</p>
+<p>// renderOptions 包含以下函数：</p>
+<p>const renderOptions = {</p>
+<p>createElement,</p>
+<p>createText,</p>
+<p>setText,</p>
+<p>setElementText,</p>
+<p>patchProp,</p>
+<p>insert,</p>
+<p>remove,</p>
+<p>}</p>
+<p>这里返回的 [renderer]{.mark} 对象，可以认为是一个跨平台的渲染器对象，针对不同的平台，会创建出不同的 [renderer]{.mark} 对象，上述是创建浏览器环境的 [renderer]{.mark} 对象，对于服务端渲染的场景，则会创建 [server<br>render]{.mark} 的 [renderer]{.mark}:</p>
+<p>// packages/runtime-dom/src/index.ts</p>
+<p>let enabledHydration = false</p>
+<p>function ensureHydrationRenderer() {</p>
+<p>renderer = enabledHydration</p>
+<p>? renderer</p>
+<p>: createHydrationRenderer(rendererOptions)</p>
+<p>enabledHydration = true</p>
+<p>return renderer</p>
+<p>}</p>
+<p>再来看一下 [createRender]{.mark}</p>
+<p>// packages/runtime-core/src/renderer.ts</p>
+<p>export function createRenderer(options) {</p>
+<p>// ...</p>
+<p>// 这里不介绍 hydrate 模式</p>
+<p>return {</p>
+<p>render,</p>
+<p>hydrate,</p>
+<p>createApp: createAppAPI(render, hydrate),</p>
+<p>}</p>
+<p>}</p>
+<p>可以看到，[renderer]{.mark} 对象上包含了 [createApp]{.mark} 和 [render]{.mark} 方法。再来看一下 [createApp]{.mark} 方法：</p>
+<p>// packages/runtime-core/src/apiCreateApp.ts</p>
+<p>function createAppAPI(render, hydrate) {</p>
+<p>// createApp createApp 方法接收的两个参数：根组件的对象和 prop</p>
+<p>return function createApp(rootComponent, rootProps = null) {</p>
+<p>const app = {</p>
+<p>// ... 省略很多不需要在这里介绍的属性</p>
+<p>_component: rootComponent,</p>
+<p>_props: rootProps,</p>
+<p>mount(rootContainer, isHydrate, isSVG) {</p>
+<p>// ...</p>
+<p>}</p>
+<p>}</p>
+<p>return app</p>
+<p>}</p>
+<p>}</p>
+<p>直到这里，我们才真正拨开了 [Vue<br>3]{.mark} 初始化根组件的核心方法，也就是入口文件 [createApp]{.mark} 真正执行的内容就是这里的 [createAppAPI]{.mark} 函数中的 [createApp]{.mark} 函数，该函数接收了 [&lt;App<br>/&gt;]{.mark} 组件作为根组件 [rootComponent]{.mark}，返回了一个包含 [mount]{.mark} 方法的 [app]{.mark} 对象。</p>
+<p>接下来再深入地看一下 [mount]{.mark} 的内部实现：</p>
+<p>// packages/runtime-core/src/apiCreateApp.ts</p>
+<p>mount(rootContainer, isHydrate, isSVG) {</p>
+<p>if (!isMounted) {</p>
+<p>// ... 省略部分不重要的代码</p>
+<p>// 1. 创建根组件的 vnode</p>
+<p>const vnode = createVNode(</p>
+<p>rootComponent,</p>
+<p>rootProps</p>
+<p>)</p>
+<p>// 2. 渲染根组件</p>
+<p>render(vnode, rootContainer, isSVG)</p>
+<p>isMounted = true</p>
+<p>}</p>
+<p>}</p>
+<p><strong>1. 创建根组件的 vnode</strong></p>
+<p>什么是 [vnode]{.mark} 节点呢？其实它和 [Virtual<br>DOM]{.mark} 是一个意思，就是将真实的 [DOM]{.mark} 以普通对象形式的数据结构来表达，简化了很多 [DOM]{.mark} 中内容。</p>
+<p>熟悉 [JS<br>DOM]{.mark} 编程的小伙伴都知道 [JS]{.mark} 直接操作 [DOM]{.mark} 往往会带来许多性能负担，所以 [vnode]{.mark} 提供了对真实 [DOM]{.mark} 上的一层虚拟映射，我们只需要操作这个虚拟的数据结构，那些真正费性能的活交给这些框架来操作就好了，框架会帮我们做很多性能优化的事情。这也是 [vnode]{.mark} 带来的最大的优势之一。</p>
+<p>其次，因为 [vnode]{.mark} 只是一种与平台无关的数据结构而已，所以理论上我们也可以将它渲染到不同平台上从而达到跨平台渲染的目的。这个也是 [weex]{.mark}、[mpvue]{.mark} 等跨端渲染框架的核心基础。</p>
+<p>上述例子中的 [template]{.mark} 中的内容用 [vnode]{.mark} 可以表示为：</p>
+<p>const vnode = {</p>
+<p>type: &#39;div&#39;,</p>
+<p>props: {</p>
+<p>&#39;class&#39;: &#39;helloWorld&#39;</p>
+<p>},</p>
+<p>children: &#39;helloWorld&#39;</p>
+<p>}</p>
+<p>说了这么多，那么根节点是如何被创建成一个 [vnode]{.mark} 的呢？核心也就在 [createVNode]{.mark} 函数中：</p>
+<p>typescript复制代码// packages/runtime-core/src/vnode.ts</p>
+<p>function createBaseVNode(...) {</p>
+<p>const vnode = {</p>
+<p>type,</p>
+<p>props,</p>
+<p>key: props &amp;&amp; normalizeKey(props),</p>
+<p>children,</p>
+<p>component: null,</p>
+<p>shapeFlag,</p>
+<p>patchFlag,</p>
+<p>dynamicProps,</p>
+<p>dynamicChildren: null,</p>
+<p>// ... 一些其他属性</p>
+<p>}</p>
+<p>// ...</p>
+<p>return vnode</p>
+<p>}</p>
+<p>function createVNode(type, props = null, children = null) {</p>
+<p>if (props) {</p>
+<p>// 如果存在 props 则需要对 props 进行一些处理，这里先省略</p>
+<p>}</p>
+<p>// ...</p>
+<p>// 处理 shapeFlag 类型</p>
+<p>const shapeFlag = isString(type)</p>
+<p>? ShapeFlags.ELEMENT</p>
+<p>: __FEATURE_SUSPENSE__ &amp;&amp; isSuspense(type)</p>
+<p>? ShapeFlags.SUSPENSE</p>
+<p>: isTeleport(type)</p>
+<p>? ShapeFlags.TELEPORT</p>
+<p>: isObject(type)</p>
+<p>? ShapeFlags.STATEFUL_COMPONENT</p>
+<p>: isFunction(type)</p>
+<p>? ShapeFlags.FUNCTIONAL_COMPONENT</p>
+<p>: 0</p>
+<p>// ...</p>
+<p>return createBaseVNode(</p>
+<p>type,</p>
+<p>props,</p>
+<p>children,</p>
+<p>patchFlag,</p>
+<p>dynamicProps,</p>
+<p>shapeFlag,</p>
+<p>isBlockNode,</p>
+<p>true</p>
+<p>)</p>
+<p>}</p>
+<p>当进行根组件渲染的时候，[createVNode]{.mark} 的第一个入参 [type]{.mark} 是我们的 [App]{.mark} 对象，也就是一个 [Object]{.mark}，所以得到的 [shapeFlag]{.mark} 的值是 [STATEFUL_COMPONENT]{.mark}，代表的是一个有状态组件对象。（这里顺便提一下，如果传入的是个函数，那么就是一个函数式组件 [FUNCTIONAL_COMPONENT]{.mark}，函数式组件和有状态的对象组件都是 [Vue]{.mark} 可处理的组件类型，这个会在下面渲染阶段提及。）</p>
+<p>到这里，[Vue]{.mark} 完成了对根组件的 [Vnode]{.mark} 对象的创建，接下来要做的就是将该组件渲染到页面中。</p>
+<p><strong>2. VNode 渲染成真实的组件</strong></p>
+<p>回到 [mount]{.mark} 函数中，接下来一步就是对 [vnode]{.mark} 的渲染工作，核心代码：</p>
+<p>render(vnode, rootContainer);</p>
+<p>那么这里的 [render]{.mark} 函数是什么呢？通过上面的代码我们发现，其实它是在调用 [createAppAPI]{.mark} 时传入进来的，而 [createAppAPI]{.mark} 则是在创建 [renderer]{.mark} 渲染器的时候调用的。那么，接下来看看 [render]{.mark} 函数的实现：</p>
+<p>// packages/runtime-core/src/renderer.ts</p>
+<p>const render = (vnode, container) =&gt; {</p>
+<p>if (vnode == null) {</p>
+<p>// 如果 vnode 不存在，表示需要卸载组件</p>
+<p>if (container._vnode) {</p>
+<p>unmount(container._vnode, null, null, true)</p>
+<p>}</p>
+<p>} else {</p>
+<p>// 否则进入更新流程（初始化创建也是特殊的一种更新）</p>
+<p>patch(container._vnode || null, vnode, container)</p>
+<p>}</p>
+<p>// 缓存 vnode</p>
+<p>container._vnode = vnode</p>
+<p>}</p>
+<p>很明显，对于初始化根组件的过程中，传入了一个根组件的 [vnode]{.mark} 对象，所以这里会执行 [patch]{.mark} 相关的动作。[patch]{.mark} 本意是补丁的意思，可以理解成为更新做一些补丁的活儿，其实初始的过程也可以看作是一个全量补丁，一种特殊的更新操作。</p>
+<p>// packages/runtime-core/src/renderer.ts</p>
+<p>function patch(n1,n2,container = null,anchor = null,parentComponent =<br>null) {</p>
+<p>// 对于类型不同的新老节点，直接进行卸载</p>
+<p>if (n1 &amp;&amp; !isSameVNodeType(n1, n2)) {</p>
+<p>anchor = getNextHostNode(n1)</p>
+<p>unmount(n1, parentComponent, parentSuspense, true)</p>
+<p>n1 = null</p>
+<p>}</p>
+<p>// 基于 n2 的类型来判断</p>
+<p>// 因为 n2 是新的 vnode</p>
+<p>const { type, shapeFlag } = n2;</p>
+<p>switch (type) {</p>
+<p>case Text:</p>
+<p>// 处理文本节点</p>
+<p>break;</p>
+<p>// 其中还有几个类型比如： static fragment comment</p>
+<p>default:</p>
+<p>// 这里就基于 shapeFlag 来处理</p>
+<p>if (shapeFlag &amp; ShapeFlags.ELEMENT) {</p>
+<p>// 处理普通 DOM 元素</p>
+<p>processElement(n1, n2, container, anchor, parentComponent);</p>
+<p>} else if (shapeFlag &amp; ShapeFlags.COMPONENT) {</p>
+<p>// 处理 component</p>
+<p>processComponent(n1, n2, container, parentComponent);</p>
+<p>} else if {</p>
+<p>// ... 处理其他元素</p>
+<p>}</p>
+<p>}</p>
+<p>}</p>
+<p>[patch]{.mark} 函数主要接收的参数说明如下：</p>
+<p>n1 表示老的 </p>
+<p>vnode 节点；</p>
+<p>n2 表示新的 </p>
+<p>vnode 节点；</p>
+<p>container 表示需要挂载的 </p>
+<p>dom 容器；</p>
+<p>anchor 挂载的参考元素；</p>
+<p>parentComponent 父组件。</p>
+<p>这里我们主要关注前 3<br>个参数，因为是初始化的过程，所以 [n1]{.mark} 本次值为空，核心看 [n2]{.mark} 的值，[n2]{.mark} 有一个 [type]{.mark} 和 [shapeFlag]{.mark}。当前 [n2]{.mark} 的 [type]{.mark} 是 [App]{.mark} 组件对象，所以逻辑会进入 [Switch]{.mark} 的 [default]{.mark} 中。再比较 [shapeFlag]{.mark} 属性，前面提到 [shapeFlag]{.mark} 的值是 [STATEFUL_COMPONENT]{.mark}。</p>
+<p>这里需要注意的是 [ShapeFlags]{.mark} 是一个二进制左移操作符生成的对象，其中[ShapeFlags.COMPONENT<br>= ShapeFlags.STATEFUL_COMPONENT |<br>ShapeFlags.FUNCTIONAL_COMPONENT]{.mark}， 所以 [shapeFlag &amp;<br>ShapeFlags.COMPONENT]{.mark} 这里的值是 [true]{.mark}，关于二进制左移操作符对象在 [Vue<br>3]{.mark} 中会大量使用，后面也会详细介绍。</p>
+<p>接着也就进入了 [processComponent]{.mark} 的逻辑了：</p>
+<p>// packages/runtime-core/src/renderer.ts</p>
+<p>function processComponent(n1, n2, container, parentComponent) {</p>
+<p>// 如果 n1 没有值的话，那么就是 mount</p>
+<p>if (!n1) {</p>
+<p>// 初始化 component</p>
+<p>mountComponent(n2, container, parentComponent);</p>
+<p>} else {</p>
+<p>updateComponent(n1, n2, container);</p>
+<p>}</p>
+<p>}</p>
+<p>同理，这里我们只看初始化的逻辑，所以 [n1]{.mark} 此时还是个空值，那么就会进入 [mountComponent]{.mark} 函数对组件进行初始挂载过程。</p>
+<p>// packages/runtime-core/src/renderer.ts</p>
+<p>function mountComponent(initialVNode, container, parentComponent) {</p>
+<p>// 1. 先创建一个 component instance</p>
+<p>const instance = (initialVNode.component = createComponentInstance(</p>
+<p>initialVNode,</p>
+<p>parentComponent</p>
+<p>));</p>
+<p>// 2. 初始化 instance 上的 props, slots, 执行组件的 setup 函数...</p>
+<p>setupComponent(instance);</p>
+<p>// 3. 设置并运行带副作用的渲染函数</p>
+<p>setupRenderEffect(instance, initialVNode, container);</p>
+<p>}</p>
+<p>该函数实现过程还是非常清晰的，思考一下，一个组件的初始化要做哪些内容呢？</p>
+<p>其实很容易想到，我们需要一个实例化的组件对象，该对象可以在 [Vue]{.mark} 执行的运行时上下文中随时获取到，另外还需要对实例化后的组件中的属性做一些优化、处理、赋值等操作，最后，就是把组件实例的 [render]{.mark} 函数执行一遍。</p>
+<p>上面也是 [mountComponent]{.mark} 核心做的事情，我们一个个来看。</p>
+<p>第一步是组件实例化，在 [Vue<br>3]{.mark} 中通过 [createComponentInstance]{.mark} 的方法创建组件实例，返回的是一个组件实例的对象，大致包含以下属性：</p>
+<p>// packages/runtime-core/src/component.ts</p>
+<p>const instance = {</p>
+<p>// 这里是组件对象</p>
+<p>type: vnode.type,</p>
+<p>// 组件 vnode</p>
+<p>vnode,</p>
+<p>// 新的组件 vnode</p>
+<p>next: null,</p>
+<p>// props 相关</p>
+<p>props: {},</p>
+<p>// 指向父组件</p>
+<p>parent,</p>
+<p>// 依赖注入相关</p>
+<p>provides: parent ? parent.provides : {},</p>
+<p>// 渲染上下文代理</p>
+<p>proxy: null,</p>
+<p>// 标记是否被挂载</p>
+<p>isMounted: false,</p>
+<p>// attrs 相关</p>
+<p>attrs: {},</p>
+<p>// slots 相关</p>
+<p>slots: {},</p>
+<p>// context 相关</p>
+<p>ctx: {},</p>
+<p>// setup return 的状态数据</p>
+<p>setupState: {},</p>
+<p>// ...</p>
+<p>};</p>
+<p>上述实例属性，相对源码而言，已经省略了很多内容了，这些属性现在看着肯定不知所云，头皮发麻。但相应的属性是 [vue]{.mark} 在特定的场景和功能下才会用到的，相信你跟着本小册一起阅读后，回过头来再去看一遍这些属性，就会”顿悟”。</p>
+<p>然后是对实例化后的组件中的属性做一些优化、处理、赋值等操作，这里主要是初始化了 [props]{.mark}、[slots]{.mark}，并执行组件的 [setup]{.mark} 函数，核心的实现和功能我们将在下一节介绍。</p>
+<p>// packages/runtime-core/src/component.ts</p>
+<p>export function setupComponent(instance) {</p>
+<p>// 1. 处理 props</p>
+<p>// 取出存在 vnode 里面的 props</p>
+<p>const { props, children } = instance.vnode;</p>
+<p>initProps(instance, props);</p>
+<p>// 2. 处理 slots</p>
+<p>initSlots(instance, children);</p>
+<p>// 3. 调用 setup 并处理 setupResult</p>
+<p>setupStatefulComponent(instance);</p>
+<p>}</p>
+<p>最后是把组件实例的 [render]{.mark} 函数执行一遍，这里是通过 [setupRenderEffect]{.mark} 来执行的。我们再看一下这个函数的实现：</p>
+<p>// packages/runtime-core/src/renderer.ts</p>
+<p>const setupRenderEffect = (instance, initialVNode, container, anchor,<br>parentSuspense, isSVG, optimized) =&gt; {</p>
+<p>function componentUpdateFn() {</p>
+<p>if (!instance.isMounted) {</p>
+<p>// 渲染子树的 vnode</p>
+<p>const subTree = (instance.subTree = renderComponentRoot(instance))</p>
+<p>// 挂载子树 vnode 到 container 中</p>
+<p>patch(null, subTree, container, anchor, instance, parentSuspense, isSVG)</p>
+<p>// 把渲染生成的子树根 DOM 节点存储到 el 属性上</p>
+<p>initialVNode.el = subTree.el</p>
+<p>instance.isMounted = true</p>
+<p>}</p>
+<p>else {</p>
+<p>// 更新相关，后面介绍</p>
+<p>}</p>
+<p>}</p>
+<p>// 创建副作用渲染函数</p>
+<p>instance.update = effect(componentUpdateFn, prodEffectOptions)</p>
+<p>}</p>
+<p>这里我们再看一下 [componentUpdateFn]{.mark} 这个函数，核心是调用了 [renderComponentRoot]{.mark} 来生成 [subTree]{.mark}，然后再把 [subTree]{.mark} 挂载到 [container]{.mark} 中。其实 [renderComponentRoot]{.mark} 的核心工作就是执行 [instance.render]{.mark} 方法，该方法前面我们已经说了，组件在编译时会生成组件对象，包含了 [render]{.mark} 函数，该函数内部是一系列的渲染函数的执行：</p>
+<p>import { openBlock, createElementBlock } from &quot;vue&quot;</p>
+<p>const _hoisted_1 = { class: &quot;helloWorld&quot; }</p>
+<p>export function render(...) {</p>
+<p>return (openBlock(), createElementBlock(&quot;div&quot;, _hoisted_1, &quot; hello<br>world &quot;))</p>
+<p>}</p>
+<p>那么只需要看一下 [createElementBlock]{.mark} 函数的实现：</p>
+<p>// packages/runtime-core/src/vnode.ts</p>
+<p>export const createElementBlock = (...) =&gt; {</p>
+<p>return setupBlock(</p>
+<p>createBaseVNode(</p>
+<p>type,</p>
+<p>props,</p>
+<p>children,</p>
+<p>patchFlag,</p>
+<p>dynamicProps,</p>
+<p>shapeFlag,</p>
+<p>true /* isBlock */</p>
+<p>)</p>
+<p>)</p>
+<p>};</p>
+<h1 id="可以看到本质还是调用了-createBaseVNode-mark-创新-vnode-mark-。所以，我们可以推导出-subtree-mark-就是调用-render-mark-函数而生产的-vnode-mark-节点。这里需要注意的一点是，因为-subtree-mark-调用的-createBaseVNode-mark-创建时，传入的-type"><a href="#可以看到本质还是调用了-createBaseVNode-mark-创新-vnode-mark-。所以，我们可以推导出-subtree-mark-就是调用-render-mark-函数而生产的-vnode-mark-节点。这里需要注意的一点是，因为-subtree-mark-调用的-createBaseVNode-mark-创建时，传入的-type" class="headerlink" title="可以看到本质还是调用了 [createBaseVNode]{.mark} 创新 [vnode]{.mark}。所以，我们可以推导出 [subtree]{.mark} 就是调用 [render]{.mark} 函数而生产的 [vnode]{.mark} 节点。这里需要注意的一点是，因为 [subtree]{.mark} 调用的 [createBaseVNode]{.mark} 创建时，传入的 [type"></a>可以看到本质还是调用了 [createBaseVNode]{.mark} 创新 [vnode]{.mark}。所以，我们可以推导出 [subtree]{.mark} 就是调用 [render]{.mark} 函数而生产的 [vnode]{.mark} 节点。这里需要注意的一点是，因为 [subtree]{.mark} 调用的 [createBaseVNode]{.mark} 创建时，传入的 [type</h1><p>div]{.mark} 在这里是个 [string]{.mark}，所以返回的 [shapeFlags]{.mark} 的值是 [ELEMENT]{.mark}。</p>
+<p>渲染生成子树 [vnode]{.mark} 后，接下来就是继续调用 [patch]{.mark} 函数把子树 [vnode]{.mark} 挂载到 [container]{.mark} 中了，前面说过了 [patch]{.mark} 的实现，再来简单看一下当传入的 [vnode]{.mark} 的 [shapeFlags]{.mark} 是个 [ELEMENT]{.mark} 时，会调用 [processElement]{.mark} 这个函数：</p>
+<p>if (shapeFlag &amp; ShapeFlags.ELEMENT) {</p>
+<p>processElement(n1, n2, container, anchor, parentComponent);</p>
+<p>}</p>
+<p>我们来看一下 [processElement]{.mark} 的实现：</p>
+<p>// packages/runtime-core/src/renderer.ts</p>
+<p>function processElement(n1, n2, container, anchor, parentComponent) {</p>
+<p>if (!n1) {</p>
+<p>// 挂载元素节点</p>
+<p>mountElement(n2, container, anchor);</p>
+<p>} else {</p>
+<p>// 更新元素节点</p>
+<p>updateElement(n1, n2, container, anchor, parentComponent);</p>
+<p>}</p>
+<p>}</p>
+<p>因为在初始化的过程中，[n1]{.mark} 是 [null]{.mark}，所以这里执行的是 [mountElement]{.mark} 进行元素的初始化挂载。</p>
+<p>// packages/runtime-core/src/renderer.ts</p>
+<p>const mountElement = (vnode, container, anchor, parentComponent,<br>parentSuspense, isSVG, optimized) =&gt; {</p>
+<p>let el</p>
+<p>const { type, props, shapeFlag, transition, patchFlag, dirs } = vnode</p>
+<p>// ...</p>
+<p>// 根据 vnode 创建 DOM 节点</p>
+<p>el = vnode.el = hostCreateElement(vnode.type, isSVG, props &amp;&amp; props.is)</p>
+<p>if (props) {</p>
+<p>// 处理 props 属性</p>
+<p>for (const key in props) {</p>
+<p>if (!isReservedProp(key)) {</p>
+<p>hostPatchProp(el, key, null, props[key], isSVG)</p>
+<p>}</p>
+<p>}</p>
+<p>}</p>
+<p>// 文本节点处理</p>
+<p>if (shapeFlag &amp; ShapeFlags.TEXT_CHILDREN) {</p>
+<p>hostSetElementText(el, vnode.children)</p>
+<p>} else if (shapeFlag &amp; ShapeFlags.ARRAY_CHILDREN) {</p>
+<p>// 如果节点是个数据类型，则递归子节点</p>
+<p>mountChildren(vnode.children, el)</p>
+<p>}</p>
+<p>// 把创建好的 el 元素挂载到容器中</p>
+<p>hostInsert(el, container, anchor)</p>
+<p>}</p>
+<p>[mountElemet]{.mark} 首先是通过 [hostCreateElement]{.mark} 创建了一个 [DOM]{.mark} 节点，然后处理一下 [props]{.mark} 属性，接着根据 [shapeFlag]{.mark} 判断子节点的类型，如果节点是个文本节点，则直接创建文本节点，如果子节点是个数组，比如这种情况：</p>
+<p>return (openBlock(), createElementBlock(&quot;div&quot;, _hoisted_1, [</p>
+<p>hoisted_2,</p>
+<p>createVNode(_component_Hello)</p>
+<p>]))</p>
+<p>对于这种子节点是数组的情况时，它的 [shapeFlag]{.mark} 将是一个数组类型 [ARRAY_CHILDREN]{.mark}。此时会对该 [vnode]{.mark} 节点的子节点调用 [mountChildren]{.mark} 进行递归的 [patch]{.mark} 渲染。</p>
+<p>最后，处理完所有子节点后，通过 [hostInsert]{.mark} 方法把缓存在内存中的 [DOM<br>el]{.mark} 映射渲染到真实的 [DOM Container]{.mark} 当中。</p>
+<p>// packages/runtime-dom/src/nodeOps.ts</p>
+<p>insert: (child, parent, anchor) {</p>
+<p>parent.insertBefore(child, anchor || null)</p>
+<p>}</p>
+<p><strong>总结</strong></p>
+<p>到这里，我们已经完成了从入口文件开始，分析根组件如何挂载渲染到真实 [DOM]{.mark} 的流程，再简单通过一张流程图回顾一下上述内容，绿色部分是初始化的过程，也是本小节的内容，灰色部分我们后面章节再做介绍。</p>
+<p><img src="https://cdn-us.imgs.moe/2023/05/26/646f8bc4473c9.png" alt="截图.png"></p>
+<p>然后我们再引用一下 [Vue]{.mark} 官网上的一张渲染流程图：</p>
+<p><img src="https://cdn-us.imgs.moe/2023/05/26/646f8bc4563ca.png" alt="截图.png"></p>
+<p>现在再来看这一张图，整体流程就会清晰了很多：在组件初始化挂载阶段，模板被编译成渲染函数的形式，交由渲染器执行，渲染器执行渲染函数得到 [APP]{.mark} 组件对象的子树 [vnode]{.mark}，子树 [vnode]{.mark} 进行递归 [patch]{.mark} 后生成不同类型的 [DOM]{.mark} 节点，最后把这些 [DOM]{.mark} 节点挂载到页面的 [container]{.mark} 当中。</p>
+</div><div class="article-tags size-small is-uppercase mb-4"><i class="fas fa-tags has-text-grey"></i> <a class="link-muted mr-2" rel="tag" href="/tags/%E5%89%8D%E7%AB%AF/">前端</a></div><div class="recommend-post"><span class="is-size-6 has-text-grey has-mr-7"># 推荐文章</span><br><span>  1.<a class="is-size-6" href="/posts/39441e6f/" target="_blank">响应式原理：Vue 3 的 nextTick ？</a><br></span><span>  2.<a class="is-size-6" href="/posts/91e84f90/" target="_blank">响应式原理：副作用函数探秘</a><br></span><span>  3.<a class="is-size-6" href="/posts/bf54f4c/" target="_blank">响应式原理：基于 Proxy 的响应式是什么样的？</a><br></span><span>  4.<a class="is-size-6" href="/posts/16c5c5d5/" target="_blank">渲染器：数组子节点的 diff 算法</a><br></span><span>  5.<a class="is-size-6" href="/posts/8d428288/" target="_blank">渲染器：组件是如何完成更新的？</a><br></span></div></article></div><div class="card"><div class="card-content"><h3 class="menu-label has-text-centered">喜欢这篇文章？打赏一下作者吧</h3><div class="buttons is-centered"><a class="button is-info donate"><span class="icon is-small"><i class="fab fa-alipay"></i></span><span>支付宝</span><span class="qrcode"><img src="https://cdn-us.imgs.moe/2023/05/26/646fb97e763cc.jpg" alt="支付宝"></span></a><a class="button is-success donate"><span class="icon is-small"><i class="fab fa-weixin"></i></span><span>微信</span><span class="qrcode"><img src="https://cdn-us.imgs.moe/2023/05/26/646fb97e763da.jpg" alt="微信"></span></a></div></div></div><nav class="post-navigation mt-4 level is-mobile"><div class="level-start"><a class="article-nav-prev level level-item link-muted" href="/posts/b209f95d/"><i class="level-item fas fa-chevron-left"></i><span class="level-item">渲染器：数据访问是如何被代理的？</span></a></div><div class="level-end"><a class="article-nav-next level level-item link-muted" href="/posts/51a34acf/"><span class="level-item">Vue 2 即将成为过去</span><i class="level-item fas fa-chevron-right"></i></a></div></nav></div><div class="column column-left is-4-tablet is-4-desktop is-4-widescreen  order-1 is-sticky"><div class="card widget toc-scroll" id="toc"><div class="card-content"><div class="menu"><h3 class="menu-label">目录</h3><ul class="menu-list"><li><a class="is-flex" id="toc-item-可以看到本质还是调用了-createBaseVNode-mark-创新-vnode-mark-。所以，我们可以推导出-subtree-mark-就是调用-render-mark-函数而生产的-vnode-mark-节点。这里需要注意的一点是，因为-subtree-mark-调用的-createBaseVNode-mark-创建时，传入的-type" href="#可以看到本质还是调用了-createBaseVNode-mark-创新-vnode-mark-。所以，我们可以推导出-subtree-mark-就是调用-render-mark-函数而生产的-vnode-mark-节点。这里需要注意的一点是，因为-subtree-mark-调用的-createBaseVNode-mark-创建时，传入的-type"><span>可以看到本质还是调用了 [createBaseVNode]{.mark} 创新 [vnode]{.mark}。所以，我们可以推导出 [subtree]{.mark} 就是调用 [render]{.mark} 函数而生产的 [vnode]{.mark} 节点。这里需要注意的一点是，因为 [subtree]{.mark} 调用的 [createBaseVNode]{.mark} 创建时，传入的 [type</span></a></li></ul></div></div><script type="text/javascript" async>
+        $(document).ready(function () { //参考自 https://github.com/ppoffice/hexo-theme-icarus/pull/616/files
+            var observerTopMargin;
+            var scrollObserver;
+            var headerElems = $(".headerlink");
+            var activeTocItem;
+        
+            function initIntersectionObserver(docHeight) {
+                observerTopMargin = docHeight;
+                scrollObserver = new IntersectionObserver(scrollCallBack,
+                    {
+                        root: null,  // viewpoint
+                        rootMargin: docHeight + "px 0px -80% 0px"  // cover top 30% of viewport to the top of document
+                    })
+            }
+        
+            function scrollCallBack(entries, observer) {
+                if ($(window).scrollTop() > observerTopMargin * 0.7) { 
+                    // User somehow scroll to 70% of observerTopMargin (which is inited as 200% document height)
+                    // Observer top margin need to extend to cover all the space to the top of the document
+                    initIntersectionObserver(observerTopMargin * 2)
+                    observer.disconnect();
+                    return;
+                }
+                let toActive;
+                if (entries[0].intersectionRatio == 1) {  // enter viewed area
+                    let entry = entries.reduce((u, v) => (u.target.toc_id > v.target.toc_id ? u : v));  // get the lowest item
+                    toActive = $("#toc-item-" + $(entry.target).attr("href").substr(1));
+                } else {
+                    let entry = entries.reduce((u, v) => (u.target.toc_id < v.target.toc_id ? u : v));  // get the highest item
+                    let idx = Math.max(entry.target.toc_id - 1, 0);
+                    toActive = $("#toc-item-" + $(headerElems[idx]).attr("href").substr(1));
+                }
+                if (activeTocItem) activeTocItem.removeClass("is-current");
+                activeTocItem = toActive
+                activeTocItem.addClass("is-current");
+            }
+        
+            initIntersectionObserver($(document).height() * 2);
+            headerElems.each(function (index, obj) {
+                obj.toc_id = index;
+                scrollObserver.observe(obj);
+            })
+        });</script></div><div class="card widget"><div class="card-content"><nav class="level"><div class="level-item has-text-centered flex-shrink-1"><div><figure class="image is-128x128 mx-auto mb-2"><img class="is-rounded" src="https://p3-passport.byteimg.com/img/user-avatar/d8bc7351ac3c93b11cd3146be24a0cba~100x100.awebp" alt="爷ゝ本霸气っ"></figure><p class="title is-size-4 is-block line-height-inherit">爷ゝ本霸气っ</p><p class="is-size-6 is-block">我欲乘风去，昔年化龙归</p><p class="is-size-6 is-flex justify-content-center"><i class="fas fa-map-marker-alt mr-1"></i><span>鹏城</span></p></div></div></nav><nav class="level is-mobile"><div class="level-item has-text-centered is-marginless"><div><p class="heading">文章</p><a href="/archives"><p class="title">22</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">分类</p><a href="/categories"><p class="title">7</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">标签</p><a href="/tags"><p class="title">6</p></a></div></div></nav><hr><p id="hitokoto">:D 舔狗日记获取中...</p><script type="text/javascript" defer>
+                                // 获取舔狗日记
+                                const randomTianDogData = function (list) {
+                                    // 随机取出一个元素
+                                    const randomIndex = Math.floor(Math.random() * list.length); // 生成 0 到 list.length-1 之间的整数
+                                    return list[randomIndex]; // 根据随机下标获取数组中的元素
+                                }
+                                // 获取年月日
+                                const randomTianDogDate = function () {
+                                    // 获取 1970 年 1 月 1 日至今的毫秒数范围
+                                    const minTimestamp = new Date('2020-01-01').getTime();
+                                    const maxTimestamp = new Date().getTime();
+                        
+                                    // 生成指定范围内的随机日期
+                                    const randomTimestamp = Math.floor(Math.random() * (maxTimestamp - minTimestamp)) + minTimestamp;
+                                    const randomDate = new Date(randomTimestamp);
+                        
+                                    // 获取随机日期的年、月、日
+                                    const year = randomDate.getFullYear();
+                                    const month = randomDate.getMonth() + 1;
+                                    const day = randomDate.getDate();
+                        
+                                    return year + '-' + month + '-' + day // 输出随机的年月日
+                                }
+
+                                function getYiyan(){
+                                    $.when(
+                                      $.getJSON('http://111.230.213.88/mockData/weathers.json'),
+                                      $.getJSON('http://111.230.213.88/mockData/diaries.json')
+                                    ).done(function(data1, data2) {
+                                      // 在这里对两个接口的数据进行操作
+                                      $('#hitokoto').html("");
+                                      $('#hitokoto').append(
+                                        "<p>" + randomTianDogDate() + "</p><p>" + randomTianDogData(data1[0]) + "</p>" +
+                                        "<strong style='color: #3273dc;'>" + randomTianDogData(data2[0]) + "</strong>"
+                                      );  
+                                    }).fail(function() {
+                                      console.log('Error: 舔狗日记获取失败.');
+                                    });
+                                }
+                                $(function (){getYiyan();$('#hitokoto').click(function(){getYiyan();})});</script></div></div><!--!--><div class="card widget"><div class="card-content"><h3 class="menu-label">最新文章</h3><article class="media"><a class="media-left" href="/posts/658c93f2/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646fa77438c98.png" alt="模块标准：为什么 ESM 是前端模块化的未来？"></p></a><div class="media-content size-small"><p><time dateTime="2022-09-17T11:13:16.000Z">2022-09-17</time></p><p class="title is-6"><a class="link-muted" href="/posts/658c93f2/">模块标准：为什么 ESM 是前端模块化的未来？</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAVite/">深入浅出Vite</a></p></div></article><article class="media"><a class="media-left" href="/posts/e76f424e/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646fa4ee2fa1b.png" alt="让 Vite 助力你的前端工程化之路"></p></a><div class="media-content size-small"><p><time dateTime="2022-09-07T11:13:16.000Z">2022-09-07</time></p><p class="title is-6"><a class="link-muted" href="/posts/e76f424e/">让 Vite 助力你的前端工程化之路</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAVite/">深入浅出Vite</a></p></div></article><article class="media"><a class="media-left" href="/posts/39441e6f/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646f9fde778cf.png" alt="响应式原理：Vue 3 的 nextTick ？"></p></a><div class="media-content size-small"><p><time dateTime="2022-08-27T11:13:16.000Z">2022-08-27</time></p><p class="title is-6"><a class="link-muted" href="/posts/39441e6f/">响应式原理：Vue 3 的 nextTick ？</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/">深入Vue3原理</a></p></div></article><article class="media"><a class="media-left" href="/posts/91e84f90/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646f9fde38e7e.png" alt="响应式原理：副作用函数探秘"></p></a><div class="media-content size-small"><p><time dateTime="2022-08-17T11:13:16.000Z">2022-08-17</time></p><p class="title is-6"><a class="link-muted" href="/posts/91e84f90/">响应式原理：副作用函数探秘</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/">深入Vue3原理</a></p></div></article><article class="media"><a class="media-left" href="/posts/bf54f4c/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646f9dbdbc919.png" alt="响应式原理：基于 Proxy 的响应式是什么样的？"></p></a><div class="media-content size-small"><p><time dateTime="2022-08-07T11:13:16.000Z">2022-08-07</time></p><p class="title is-6"><a class="link-muted" href="/posts/bf54f4c/">响应式原理：基于 Proxy 的响应式是什么样的？</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/">深入Vue3原理</a></p></div></article></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">分类</h3><ul class="menu-list"><li><a class="level is-mobile is-marginless" href="/categories/%E5%89%8D%E7%AB%AF/"><span class="level-start"><span class="level-item">前端</span></span><span class="level-end"><span class="level-item tag">10</span></span></a><ul class="mr-0"><li><a class="level is-mobile is-marginless" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/"><span class="level-start"><span class="level-item">深入Vue3原理</span></span><span class="level-end"><span class="level-item tag">8</span></span></a></li><li><a class="level is-mobile is-marginless" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAVite/"><span class="level-start"><span class="level-item">深入浅出Vite</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li></ul></li><li><a class="level is-mobile is-marginless" href="/categories/%E5%B7%A5%E5%85%B7%E6%95%99%E7%A8%8B/"><span class="level-start"><span class="level-item">工具教程</span></span><span class="level-end"><span class="level-item tag">4</span></span></a><ul class="mr-0"><li><a class="level is-mobile is-marginless" href="/categories/%E5%B7%A5%E5%85%B7%E6%95%99%E7%A8%8B/%E4%B8%BB%E9%A2%98%E5%B7%A5%E5%85%B7/"><span class="level-start"><span class="level-item">主题工具</span></span><span class="level-end"><span class="level-item tag">4</span></span></a></li></ul></li><li><a class="level is-mobile is-marginless" href="/categories/%E6%96%87%E7%AB%A0%E5%8A%A0%E5%AF%86/"><span class="level-start"><span class="level-item">文章加密</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/categories/%E6%B3%95%E5%BE%8B/"><span class="level-start"><span class="level-item">法律</span></span><span class="level-end"><span class="level-item tag">7</span></span></a></li></ul></div></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">归档</h3><ul class="menu-list"><li><a class="level is-mobile is-marginless" href="/archives/2022/09/"><span class="level-start"><span class="level-item">九月 2022</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2022/08/"><span class="level-start"><span class="level-item">八月 2022</span></span><span class="level-end"><span class="level-item tag">3</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2022/07/"><span class="level-start"><span class="level-item">七月 2022</span></span><span class="level-end"><span class="level-item tag">3</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2022/06/"><span class="level-start"><span class="level-item">六月 2022</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2020/01/"><span class="level-start"><span class="level-item">一月 2020</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><a class="level is-mobile is-marginless" href="/archives/"><span class="level-start"><span class="level-item">查看全部&gt;&gt;</span></span></a></ul></div></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">标签</h3><div class="field is-grouped is-grouped-multiline"><div class="control"><a class="tags has-addons" href="/tags/%E5%89%8D%E7%AB%AF/"><span class="tag">前端</span><span class="tag is-grey-lightest">10</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E6%B3%95%E5%BE%8B/"><span class="tag">法律</span><span class="tag is-grey-lightest">7</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E5%B7%A5%E5%85%B7%E6%95%99%E7%A8%8B/"><span class="tag">工具教程</span><span class="tag is-grey-lightest">3</span></a></div><div class="control"><a class="tags has-addons" href="/tags/hexo%E4%B8%BB%E9%A2%98/"><span class="tag">hexo主题</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/icarus%E4%B8%BB%E9%A2%98%E9%85%8D%E7%BD%AE/"><span class="tag">icarus主题配置</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E5%8A%A0%E5%AF%86%E6%96%87%E7%AB%A0/"><span class="tag">加密文章</span><span class="tag is-grey-lightest">1</span></a></div></div></div></div></div><!--!--></div></div></div></section><footer class="footer"><div class="container"><div class="level"><div class="level-start"><a class="footer-logo is-block mb-2" href="/"><img src="https://s1.ax1x.com/2023/05/25/p9H4zND.png" alt="爷ゝ本霸气っ" height="28"></a><p class="size-small"><span>&copy; 2023 爷ゝ本霸气っ</span>  Powered by <a href="https://hexo.io/" target="_blank">Hexo</a> &amp; <a href="https://github.com/ppoffice/hexo-theme-icarus" target="_blank">Icarus</a>,Modify by <a href="https://github.com/Leon9916/hexo-blog" target="_blank">removeif</a> <br>© 版权2说明：[本网站所有内容均收集于互联网或自己创作,<br>    方便于自己学习交流，如有侵权，请<a href="mailto:2476288442@qq.com">联系</a>，立即处理]<br><script type="text/javascript" src="/js/statistics.js"></script><span id="statistic-times">网站运行时间统计加载中...</span></p></div><div class="level-end"></div></div></div></footer><script src="https://cdn.jsdelivr.net/npm/moment@2.22.2/min/moment-with-locales.min.js"></script><script>moment.locale("zh-CN");</script><script>var IcarusThemeSettings = {
+            site: {
+                url: 'https://removeif.github.io',
+                external_link: {"enable":true,"exclude":[]}
+            },
+            article: {
+                highlight: {
+                    clipboard: true,
+                    fold: 'unfolded'
+                }
+            }
+        };</script><script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.4/dist/clipboard.min.js" defer></script><script src="/js/animation.js"></script><a id="back-to-top" title="回到顶端" href="javascript:;"><i class="fas fa-chevron-up"></i></a><script src="/js/back-to-top.js" defer></script><!--!--><!--!--><script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/js/lightgallery.min.js" defer></script><script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js" defer></script><script src="/js/gallery.js" defer></script><!--!--><!--!--><!--!--><script src="/js/main.js" defer></script><script src="/js/comment-issue-data.js" defer></script><link rel="stylesheet" href="/css/insight.css"><div class="searchbox ins-search"><div class="searchbox-container ins-search-container"><div class="searchbox-input-wrapper"><input class="searchbox-input ins-search-input" type="text" placeholder="想要查找什么..."><span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span></div><div class="searchbox-result-wrapper ins-section-wrapper"><div class="ins-section-container"></div></div></div></div><script>(function (window) {
+            var INSIGHT_CONFIG = {
+                TRANSLATION: {
+                    POSTS: '文章',
+                    PAGES: '页面',
+                    CATEGORIES: '分类',
+                    TAGS: '标签',
+                    UNTITLED: '(无标题)',
+                },
+                CONTENT_URL: '/content.json',
+            };
+            window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+        })(window);</script><script src="/js/insight.js" defer></script></body></html>

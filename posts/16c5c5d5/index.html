@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="generator" content="Hexo 4.2.1"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta><title>渲染器：数组子节点的 diff 算法 - 爷ゝ本霸气っ</title><meta description="技术分享,前端开发,数据接口,算法"><meta property="og:type" content="blog"><meta property="og:title" content="爷ゝ本霸气っ"><meta property="og:url" content="https://removeif.github.io/"><meta property="og:site_name" content="爷ゝ本霸气っ"><meta property="og:description" content="技术分享,前端开发,数据接口,算法"><meta property="og:locale" content="zh_CN"><meta property="og:image" content="https://p3-passport.byteimg.com/img/user-avatar/d8bc7351ac3c93b11cd3146be24a0cba~100x100.awebp"><meta property="article:published_time" content="2022-07-27T11:13:16.000Z"><meta property="article:modified_time" content="2023-05-25T17:42:28.267Z"><meta property="article:author" content="removeif"><meta property="article:tag" content="categories-tool"><meta property="twitter:card" content="summary"><meta property="twitter:image" content="https://p3-passport.byteimg.com/img/user-avatar/d8bc7351ac3c93b11cd3146be24a0cba~100x100.awebp"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://removeif.github.io/"},"headline":"爷ゝ本霸气っ","image":[],"datePublished":"2022-07-27T11:13:16.000Z","dateModified":"2023-05-25T17:42:28.267Z","author":{"@type":"Person","name":"removeif"},"description":"技术分享,前端开发,数据接口,算法"}</script><link rel="alternative" href="/atom.xml" title="爷ゝ本霸气っ" type="application/atom+xml"><link rel="icon" href="https://p3-passport.byteimg.com/img/user-avatar/d8bc7351ac3c93b11cd3146be24a0cba~100x100.awebp"><link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.0/css/all.css"><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu:400,600|Source+Code+Pro"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@9.12.0/styles/atom-one-dark.css"><link rel="stylesheet" href="//fonts.googleapis.com/css?family=Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Microsoft YaHei:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&amp;amp;subset=latin,latin-ext"><style>body>.footer,body>.navbar,body>.section{opacity:1}</style><!--!--><!--!--><script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" defer></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/css/justifiedGallery.min.css"><!--!--><!--!--><script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script><link rel="stylesheet" href="/css/style.css"><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script><script src="/js/globalUtils.js"></script><link rel="stylesheet" href="/live2d/waifu.css"><script type="text/javascript" async src="/live2d/autoload.js"></script></head><body class="is-3-column has-navbar-fixed-top"><nav class="navbar navbar-main is-fixed-top"><div class="container"><div class="navbar-brand justify-content-center"><a class="navbar-item navbar-logo" href="/"><img src="https://s1.ax1x.com/2023/05/25/p9H4zND.png" alt="爷ゝ本霸气っ" height="28"></a></div><div class="navbar-menu"><div class="navbar-start"><a class="navbar-item" href="/">首页</a><a class="navbar-item" href="/categories">分类</a><a class="navbar-item" href="/media">影音</a><a class="navbar-item" href="/album">相册</a><a class="navbar-item" href="/about">关于</a><a class="navbar-item" href="/chat_brother">Chat哥</a></div><div class="navbar-end"><a class="navbar-item" target="_blank" rel="noopener" title="Download on GitHub" href="https://github.com/Leon9916/hexo-blog"><i class="fab fa-github"></i></a><a class="navbar-item is-hidden-tablet catalogue" title="目录" href="javascript:;"><i class="fas fa-list-ul"></i></a><a class="navbar-item search" title="搜索" href="javascript:;"><i class="fas fa-search"></i></a><a class="navbar-item" id="night-nav" title="Night Mode" href="javascript:;"><i class="fas fa-moon" id="night-icon"></i></a></div></div></div></nav><script type="text/javascript" src="/js/theme-setting.js"></script><section class="section"><div class="container"><div class="columns"><div class="column order-2 column-main is-8-tablet is-8-desktop is-9-widescreen"><div class="card"><div class="card-image"><span class="image is-7by3"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646f9bc35003d.png" alt="渲染器：数组子节点的 diff 算法"></span></div><article class="card-content article" role="article"><div class="article-meta size-small is-uppercase level is-mobile"><div class="level-left"><span class="level-item"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a><span> / </span><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/">深入Vue3原理</a></span><span class="level-item">32 分钟 读完 (大约 4859 个字)</span></div></div><h1 class="title is-3 is-size-4-mobile">渲染器：数组子节点的 diff 算法</h1><div class="content"><blockquote>
+<p>了解了关于新旧子节点不同为数组的情况下的更新过程，下面将接着上节的内容继续介绍如果子节点都是数组的情况，那么更新过程会变成什么样呢？</p>
+</blockquote>
+<a id="more"></a>
+
+<p><strong>前言</strong></p>
+<p>了解了关于新旧子节点不同为数组的情况下的更新过程，下面将接着上节的内容继续介绍如果子节点都是数组的情况，那么更新过程会变成什么样呢？</p>
+<p><strong>1. 从头比对</strong></p>
+<p>[Vue<br>3]{.mark} 的 [diff]{.mark} 算法第一步就是进行新老节点从头比对的方式来判断是否是同类型的节点：</p>
+<p>const patchKeyedChildren = (c1, c2, container, parentAnchor,<br>parentComponent, parentSuspense, isSVG, optimized) =&gt; {</p>
+<p>let i = 0</p>
+<p>const l2 = c2.length</p>
+<p>// 旧节点的尾部标记位</p>
+<p>let e1 = c1.length - 1</p>
+<p>// 新节点的尾部标记位</p>
+<p>let e2 = l2 - 1</p>
+<p>// 从头部开始比对</p>
+<p>// (a b) c</p>
+<p>// (a b) d e</p>
+<p>while (i &lt;= e1 &amp;&amp; i &lt;= e2) {</p>
+<p>const n1 = c1[i]</p>
+<p>const n2 = (c2[i] = optimized</p>
+<p>? cloneIfMounted(c2[i] as VNode)</p>
+<p>: normalizeVNode(c2[i]))</p>
+<p>// 如果是 sameVnode 则递归执行 patch</p>
+<p>if (isSameVNodeType(n1, n2)) {</p>
+<p>patch(n1, n2, container, parentAnchor, parentComponent, parentSuspense,<br>isSVG, optimized)</p>
+<p>} else {</p>
+<p>break</p>
+<p>}</p>
+<p>i++</p>
+<p>}</p>
+<p>}</p>
+<p>这里有几个变量需要说明一下：</p>
+<p>i 代表的是头部的标记位；</p>
+<p>e1 代表的是旧的子节点的尾部标记位；</p>
+<p>e2 代表的是新的子节点的尾部标记位。</p>
+<p>从头比对就是通过不断移动 [i]{.mark} 这个头部标记位来判断对应的节点是否是 [sameVnode]{.mark}。如果是，则进行递归 [patch]{.mark} 操作，递归 [patch]{.mark} 就是继续进入到我们上一小节的内容。如果不满足条件，则退出头部比对，进入从尾比对流程。</p>
+<p><strong>2. 从尾比对</strong></p>
+<p>const patchKeyedChildren = (c1, c2, container, parentAnchor,<br>parentComponent, parentSuspense, isSVG, optimized) =&gt; {</p>
+<p>let i = 0</p>
+<p>const l2 = c2.length</p>
+<p>// 旧节点的尾部标记位</p>
+<p>let e1 = c1.length - 1</p>
+<p>// 新节点的尾部标记位</p>
+<p>let e2 = l2 - 1</p>
+<p>// 从头部开始比对</p>
+<p>// ...</p>
+<p>// 从尾部开始比对</p>
+<p>// a (b c)</p>
+<p>// d e (b c)</p>
+<p>while (i &lt;= e1 &amp;&amp; i &lt;= e2) {</p>
+<p>const n1 = c1[e1]</p>
+<p>const n2 = (c2[i] = optimized</p>
+<p>? cloneIfMounted(c2[i] as VNode)</p>
+<p>: normalizeVNode(c2[i]))</p>
+<p>// 如果是 sameVnode 则递归执行 patch</p>
+<p>if (isSameVNodeType(n1, n2)) {</p>
+<p>patch(n1, n2, container, parentAnchor, parentComponent, parentSuspense,<br>isSVG, optimized)</p>
+<p>} else {</p>
+<p>break</p>
+<p>}</p>
+<p>e1--</p>
+<p>e2--</p>
+<p>}</p>
+<p>}</p>
+<p>从尾比对就是通过不断移动新旧节点 [e1]{.mark} 和 [e2]{.mark} 的尾部指针来判断对应的节点是否是 [sameVnode]{.mark}。如果是则进行递归 [patch]{.mark} 操作，递归 [patch]{.mark} 也是继续进入到我们上一小节的内容。如果不满足条件，则退出头部比对，进入后续流程。</p>
+<p><strong>3. 新增节点</strong></p>
+<p>假设我们有这样一个旧列表：</p>
+<p>&lt;ul&gt;</p>
+<p>&lt;li key=&quot;a&quot;&gt;a&lt;/li&gt;</p>
+<p>&lt;li key=&quot;b&quot;&gt;b&lt;/li&gt;</p>
+<p>&lt;li key=&quot;c&quot;&gt;c&lt;/li&gt;</p>
+<p>&lt;li key=&quot;d&quot;&gt;d&lt;/li&gt;</p>
+<p>&lt;/ul&gt;</p>
+<p>新列表的变更是在中间插入了一个新节点：</p>
+<p>&lt;ul&gt;</p>
+<p>&lt;li key=&quot;a&quot;&gt;a&lt;/li&gt;</p>
+<p>&lt;li key=&quot;b&quot;&gt;b&lt;/li&gt;</p>
+<p>&lt;li key=&quot;b&quot;&gt;e&lt;/li&gt;</p>
+<p>&lt;li key=&quot;c&quot;&gt;c&lt;/li&gt;</p>
+<p>&lt;li key=&quot;d&quot;&gt;d&lt;/li&gt;</p>
+<p>&lt;/ul&gt;</p>
+<p>那么先进入第一步头部比对流程：</p>
+<p><img src="https://cdn-us.imgs.moe/2023/05/26/646f9bc35003d.png" alt="截图.png"></p>
+<p>第一步执行时，会完成对 [a]{.mark} 和 [b]{.mark} 头部这 2<br>个节点进行 [patch]{.mark}。当 [i =<br>2]{.mark} 时，由于此时的 [c]{.mark} 和 [e]{.mark} 节点的 [key]{.mark} 不一样，所以退出了头部比对流程，进入尾部比对：</p>
+<p><img src="https://cdn-us.imgs.moe/2023/05/26/646f9bc2d2cb4.png" alt="截图.png">{</p>
+<p>第二步执行时，会完成对 [c]{.mark} 和 [d]{.mark} 尾部这 2<br>个节点进行 [patch]{.mark}。当 [e1 = 1]{.mark} 时，由于[i &gt;<br>e1]{.mark}，所以退出了尾部比对流程。肉眼可见，此时的情况是新节点多了个 [e]{.mark} 节点的情况，所以我们需要添加多余的剩余节点：</p>
+<p>const patchKeyedChildren = (c1, c2, container,<br>parentAnchor, parentComponent, parentSuspense, isSVG, optimized) =&gt; {</p>
+<p>let i = 0</p>
+<p>const l2 = c2.length</p>
+<p>// 旧节点的尾部标记位</p>
+<p>let e1 = c1.length - 1</p>
+<p>// 新节点的尾部标记位</p>
+<p>let e2 = l2 - 1</p>
+<p>// 从头部开始必须</p>
+<p>// ...</p>
+<p>// 从尾部开始比对</p>
+<p>// ...</p>
+<p>// 如果有多余的新节点，则执行新增逻辑</p>
+<p>if (i &gt; e1) {</p>
+<p>if (i &lt;= e2) {</p>
+<p>const nextPos = e2 + 1</p>
+<p>const anchor = nextPos &lt; l2 ? c2[nextPos].el : parentAnchor</p>
+<p>while (i &lt;= e2) {</p>
+<p>// 新增新节点</p>
+<p>patch(null, c2[i], container, anchor, parentComponent, parentSuspense,<br>isSVG)</p>
+<p>i++</p>
+<p>}</p>
+<p>}</p>
+<p>}</p>
+<p>}</p>
+<p><strong>4. 删除节点</strong></p>
+<p>类比新增节点的情况，假设我们有这样一个旧列表：</p>
+<p>&lt;ul&gt;</p>
+<p>&lt;li key=&quot;a&quot;&gt;a&lt;/li&gt;</p>
+<p>&lt;li key=&quot;b&quot;&gt;b&lt;/li&gt;</p>
+<p>&lt;li key=&quot;b&quot;&gt;e&lt;/li&gt;</p>
+<p>&lt;li key=&quot;c&quot;&gt;c&lt;/li&gt;</p>
+<p>&lt;li key=&quot;d&quot;&gt;d&lt;/li&gt;</p>
+<p>&lt;/ul&gt;</p>
+<p>新列表的变更是在中间删除了一个旧节点：</p>
+<p>&lt;ul&gt;</p>
+<p>&lt;li key=&quot;a&quot;&gt;a&lt;/li&gt;</p>
+<p>&lt;li key=&quot;b&quot;&gt;b&lt;/li&gt;</p>
+<p>&lt;li key=&quot;c&quot;&gt;c&lt;/li&gt;</p>
+<p>&lt;li key=&quot;d&quot;&gt;d&lt;/li&gt;</p>
+<p>&lt;/ul&gt;</p>
+<p>那么先进入第一步头部比对流程：</p>
+<p><img src="https://cdn-us.imgs.moe/2023/05/26/646f9bc2d183c.png" alt="截图.png"></p>
+<p>第一步执行时，会完成对 [a]{.mark} 和 [b]{.mark} 头部这 2<br>个节点进行 [patch]{.mark}。当 [i =<br>2]{.mark} 时，由于此时的 [e]{.mark} 和 [c]{.mark} 节点的 [key]{.mark} 不一样，所以退出了头部比对流程，进入尾部比对：</p>
+<p><img src="https://cdn-us.imgs.moe/2023/05/26/646f9bc324623.png" alt="截图.png"></p>
+<p>第二步执行时，会完成对 [c]{.mark} 和 [d]{.mark} 尾部这 2<br>个节点进行 [patch]{.mark}。当 [e2 = 1]{.mark} 时，由于[i &gt;<br>e2]{.mark}，所以退出了尾部比对流程。肉眼可见，此时的情况是新节点少了个 [e]{.mark} 节点的情况，所以我们需要删除节点 [e]{.mark}：</p>
+<p>const patchKeyedChildren = (c1, c2, container, parentAnchor,<br>parentComponent, parentSuspense, isSVG, optimized) =&gt; {</p>
+<p>let i = 0</p>
+<p>const l2 = c2.length</p>
+<p>// 旧节点的尾部标记位</p>
+<p>let e1 = c1.length - 1</p>
+<p>// 新节点的尾部标记位</p>
+<p>let e2 = l2 - 1</p>
+<p>// 从头部开始比对</p>
+<p>// ...</p>
+<p>// 从尾部开始比对</p>
+<p>// ...</p>
+<p>// 如果有多余的新节点，则执行新增逻辑</p>
+<p>// ...</p>
+<p>// 如果有多余的旧节点，则执行卸载逻辑</p>
+<p>else if (i &gt; e2) {</p>
+<p>while (i &lt;= e1) {</p>
+<p>// 卸载节点</p>
+<p>unmount(c1[i], parentComponent, parentSuspense, true)</p>
+<p>i++</p>
+<p>}</p>
+<p>}</p>
+<p>}</p>
+<p><strong>5. 未知子序列</strong></p>
+<p>经过步骤 1、2 的操作后如果可以直接进入步骤 3、4<br>那是非常方便的操作了，直接进行多余删除缺少新增的操作。如果步骤 3、4<br>的条件都不满足的情况，那么 [Vue]{.mark} 是如何处理的呢？再来看这样一个例子。</p>
+<p>旧子节点：</p>
+<p>&lt;ul&gt;</p>
+<p>&lt;li key=&quot;a&quot;&gt;a&lt;/li&gt;</p>
+<p>&lt;li key=&quot;b&quot;&gt;b&lt;/li&gt;</p>
+<p>&lt;li key=&quot;c&quot;&gt;c&lt;/li&gt;</p>
+<p>&lt;li key=&quot;d&quot;&gt;d&lt;/li&gt;</p>
+<p>&lt;li key=&quot;e&quot;&gt;e&lt;/li&gt;</p>
+<p>&lt;li key=&quot;f&quot;&gt;f&lt;/li&gt;</p>
+<p>&lt;li key=&quot;g&quot;&gt;g&lt;/li&gt;</p>
+<p>&lt;li key=&quot;h&quot;&gt;h&lt;/li&gt;</p>
+<p>&lt;/ul&gt;</p>
+<p>新子节点：</p>
+<p>&lt;ul&gt;</p>
+<p>&lt;li key=&quot;a&quot;&gt;a&lt;/li&gt;</p>
+<p>&lt;li key=&quot;b&quot;&gt;b&lt;/li&gt;</p>
+<p>&lt;li key=&quot;e&quot;&gt;e&lt;/li&gt;</p>
+<p>&lt;li key=&quot;c&quot;&gt;c&lt;/li&gt;</p>
+<p>&lt;li key=&quot;d&quot;&gt;d&lt;/li&gt;</p>
+<p>&lt;li key=&quot;i&quot;&gt;i&lt;/li&gt;</p>
+<p>&lt;li key=&quot;g&quot;&gt;g&lt;/li&gt;</p>
+<p>&lt;li key=&quot;h&quot;&gt;h&lt;/li&gt;</p>
+<p>&lt;/ul&gt;</p>
+<p>此时经过步骤 1、2 后的结果可以表示为如下图：</p>
+<p><img src="https://cdn-us.imgs.moe/2023/05/26/646f9bc34f26b.png" alt="截图.png"></p>
+<p>这种情况，既不满足 [i &gt; e1]{.mark} 也不满足 [i &gt;<br>e2]{.mark} 的条件，所以对于这种情况应该如何处理呢？我们知道 [DOM]{.mark} 更新的性能优劣关系大致为：[属性更新]{.mark} &gt; [位置移动]{.mark} &gt; [增删节点]{.mark}。所以，我们需要尽可能地复用老节点，做属性更新，减少移动次数和增删节点的次数。</p>
+<p>那么上述更新策略假设有这样 2 种方式。</p>
+<p>c 和 </p>
+<p>d 节点不动，只做 </p>
+<p>patch，</p>
+<p>e 节点 </p>
+<p>patch 后移动到 </p>
+<p>c 节点前面，删除 </p>
+<p>f 节点，然后在 </p>
+<p>d 节点后面添加 </p>
+<p>i 节点。</p>
+<p>e 节点不动，只做 </p>
+<p>patch，</p>
+<p>c 和 </p>
+<p>d 节点 </p>
+<p>patch 后移动到 </p>
+<p>e 节点后面，删除 </p>
+<p>f 节点，然后在 </p>
+<p>d 节点后面添加 </p>
+<p>i 节点。</p>
+<p>根据上面的性能优劣关系，我们需要尽可能多地保障最多的公共子节点位置不变，只做 [patch]{.mark} 更新。然后找出多余的节点删除，找出新的节点添加，找出有需要移动的节点移动。</p>
+<p>当需要进行移动操作时，那么这个问题就变成了求取新旧子树上的<strong>最长公共子序列</strong>。当知道了最长公共子序列，所有的操作就可以简化为：</p>
+<p>如果节点在新节点中，不在旧节点中，那么新增节点。</p>
+<p>如果节点在旧节点中，不在新节点中，那么删除节点。</p>
+<p>如果节点既在旧节点中，也在新节点中，那么更新。</p>
+<p>如果节点需要移动，那么求取最长公共子序列后，进行最小位置移动。</p>
+<p>接下来看看 [Vue]{.mark} 是如何实现上述能力的。</p>
+<p><strong>构造新老节点位置映射 keyToNewIndexMap</strong></p>
+<p>// 旧子序列开始位置</p>
+<p>const s1 = i</p>
+<p>// 新子序列开始位置</p>
+<p>const s2 = i</p>
+<p>// 5.1 构建 key:index 关系索引 map</p>
+<p>const keyToNewIndexMap = new Map()</p>
+<p>for (i = s2; i &lt;= e2; i++) {</p>
+<p>const nextChild = (c2[i] = optimized</p>
+<p>? cloneIfMounted(c2[i] as VNode)</p>
+<p>: normalizeVNode(c2[i]))</p>
+<p>if (nextChild.key != null) {</p>
+<p>keyToNewIndexMap.set(nextChild.key, i)</p>
+<p>}</p>
+<p>}</p>
+<p>这里的新旧子节点开始位置通过 [s1]{.mark} 和 [s2]{.mark} 作为标记，然后开始进行构造新老节点位置映射，这里新节点 [key]{.mark} -&gt; [index]{.mark} 关系的索引图是保存在了 [keyToNewIndexMap]{.mark} 这样一个 [Map]{.mark} 结构中，其中的 [key]{.mark} 就是新节点的 [key]{.mark} 值，而 [value]{.mark} 则是旧节点对应的位置关系 [index]{.mark}。这一步完成后，生成的 [keyToNewIndexMap]{.mark} 结果可以表示为：</p>
+<p>keyToNewIndexMap = {e: 2, c: 3, d: 4, i: 5}</p>
+<p><img src="https://cdn-us.imgs.moe/2023/05/26/646f9bc37850c.png" alt="截图.png"></p>
+<p><strong>继续处理旧节点</strong></p>
+<p>有了上面的 [keyToNewIndexMap]{.mark} 新节点的索引图，接下来我们就需要遍历旧的节点，寻找旧节点在新节点中对应的位置信息，如果找到则做更新，找不到则移除。</p>
+<p>// 记录新节点已更新的数目</p>
+<p>let patched = 0</p>
+<p>// 记录新节点还有多少个没有更新</p>
+<p>const toBePatched = e2 - s2 + 1</p>
+<p>// 标记是否有必要进行节点的位置移动</p>
+<p>let moved = false</p>
+<p>// 标记是否有节点进行了位置移动</p>
+<p>let maxNewIndexSoFar = 0</p>
+<p>// 记录新节点在旧节点中的位置数组</p>
+<p>const newIndexToOldIndexMap = new Array(toBePatched)</p>
+<p>// newIndexToOldIndexMap 全部置为 0</p>
+<p>for (i = 0; i &lt; toBePatched; i++) newIndexToOldIndexMap[i] = 0</p>
+<p>// 开始遍历旧子节点</p>
+<p>for (i = s1; i &lt;= e1; i++) {</p>
+<p>// prevChild 代表旧节点</p>
+<p>const prevChild = c1[i]</p>
+<p>// 还有多余的旧节点，则删除</p>
+<p>if (patched &gt;= toBePatched) {</p>
+<p>unmount(prevChild, parentComponent, parentSuspense, true)</p>
+<p>continue</p>
+<p>}</p>
+<p>// 记录旧节点在新节点中的位置数组</p>
+<p>let newIndex = keyToNewIndexMap.get(prevChild.key)</p>
+<p>// 如果旧节点不存在于新节点中，则删除该节点</p>
+<p>if (newIndex === undefined) {</p>
+<p>unmount(prevChild, parentComponent, parentSuspense, true)</p>
+<p>} else {</p>
+<p>// newIndexToOldIndexMap 中元素为 0 表示着新节点不存在于旧节点中</p>
+<p>newIndexToOldIndexMap[newIndex - s2] = i + 1</p>
+<p>// 默认不移动的话，所有相同节点都是增序排列的</p>
+<p>// 如果有移动，必然出现节点降序的情况</p>
+<p>if (newIndex &gt;= maxNewIndexSoFar) {</p>
+<p>maxNewIndexSoFar = newIndex</p>
+<p>} else {</p>
+<p>moved = true</p>
+<p>}</p>
+<p>// 更新节点</p>
+<p>patch(</p>
+<p>prevChild,</p>
+<p>c2[newIndex] as VNode,</p>
+<p>container,</p>
+<p>null,</p>
+<p>parentComponent,</p>
+<p>parentSuspense,</p>
+<p>isSVG,</p>
+<p>slotScopeIds,</p>
+<p>optimized</p>
+<p>)</p>
+<p>// 记录更新的数量</p>
+<p>patched++</p>
+<p>}</p>
+<p>}</p>
+<p>我们简单来总结一下这一步的一些核心操作。</p>
+<p><strong>Step 1：</strong> 定义一个初始长度为新节点数组长度且默认值全为 0<br>的变量 [newIndexToOldIndexMap]{.mark}，记录新节点中的元素在旧节点中的位置关系。</p>
+<p><strong>Step<br>2：</strong> 遍历旧的节点数组，如果旧节点不存在于新节点中，则表示旧的节点其实是多余的节点，需要被移除。</p>
+<p><strong>Step<br>3：</strong> 如果旧节点存在于新节点数组中，则将它在旧子序列中的位置信息记录到 [newIndexToOldIndexMap]{.mark} 中，同时根据 [newIndex]{.mark} 是否大于 [maxNewIndexSoFar]{.mark} 来判断是否有节点移动。</p>
+<p>这里我们结合个例子来说明。假如旧节点信息为 [abc]{.mark}、新节点为 [cab]{.mark}，当旧节点遍历到 [c]{.mark} 节点时，此时的[newIndex]{.mark} 的值为 [0]{.mark} 而 [maxNewIndexSoFar]{.mark} 的值为 [2]{.mark}。这就意味着此时的 [c]{.mark} 节点并不是升序位于 [ab]{.mark} 节点之后的，因此需要标记为有需要移动的节点。</p>
+<p><strong>Step 4：</strong> 更新相同节点。</p>
+<p>经过上面的一系列操作，我们最终得到了一个 [newIndexToOldIndexMap]{.mark} 和一个 [moved]{.mark} 两个变量<br>，这两个变量将在下文的移动和新增节点中被使用。</p>
+<p>我们来看一下示例处理后的结果，如下图所示：</p>
+<p><img src="https://cdn-us.imgs.moe/2023/05/26/646f9bc36fb6c.png" alt="截图.png"></p>
+<p>此时 [c]{.mark}、[d]{.mark}、[e]{.mark} 因为是相同节点，所以进行 [patch]{.mark} 更新，[f]{.mark} 节点因为不存在于新的索引中，所以被删除。最后得到的 [newIndexToOldIndexMap]{.mark} 数据结构大致如下：</p>
+<p>newIndexToOldIndexMap = [5, 3, 4, 0]</p>
+<p>而且此时的 [moved]{.mark} 也被标记为 [true]{.mark}。</p>
+<p><strong>移动和增加新节点</strong></p>
+<p>通过前面的操作，我们完成了对旧节点的移除和更新，那么接下来就是需要进行对节点的移动和新节点的增加了：</p>
+<p>// 根据 newIndexToOldIndexMap 求取最长公共子序列</p>
+<p>const increasingNewIndexSequence = moved</p>
+<p>? getSequence(newIndexToOldIndexMap)</p>
+<p>: EMPTY_ARR</p>
+<p>// 最长公共子序列尾部索引</p>
+<p>j = increasingNewIndexSequence.length - 1</p>
+<p>// 从尾部开始遍历</p>
+<p>for (i = toBePatched - 1; i &gt;= 0; i--) {</p>
+<p>const nextIndex = s2 + i</p>
+<p>const nextChild = c2[nextIndex]</p>
+<p>const anchor = nextIndex + 1 &lt; l2 ? c2[nextIndex + 1].el :<br>parentAnchor</p>
+<p>// 如果新子序列中的节点在旧子序列中不存在，则新增节点</p>
+<p>if (newIndexToOldIndexMap[i] === 0) {</p>
+<p>patch(null, nextChild, container, anchor, parentComponent,<br>parentSuspense, isSVG)</p>
+<p>} else if (moved) {</p>
+<p>// 如果需要移动且</p>
+<p>// 没有最长递增子序列</p>
+<p>// 当前的节点不在最长递增子序列中</p>
+<p>if (j &lt; 0 || i !== increasingNewIndexSequence[j]) {</p>
+<p>move(nextChild, container, anchor, MoveType.REORDER)</p>
+<p>} else {</p>
+<p>j--</p>
+<p>}</p>
+<p>}</p>
+<p>}</p>
+<p><strong>Step<br>1：</strong> 这里针对 [moved]{.mark} 是 [true]{.mark} 的情况，则会进行求取最长递增子序列的索引操作。</p>
+<p>什么是最长递增子序列？简单来说指的是找到一个特定的最长的子序列，并且子序列中的所有元素单调递增。本例中，[newIndexToOldIndexMap<br>= [5, 3, 4, 0]]{.mark} 最长递增子序列的值为 [[3, 4]]{.mark},<br>对应到 [newIndexToOldIndexMap]{.mark} 中的索引即 [increasingNewIndexSequence<br>= [1, 2]]{.mark}。关于具体的算法细节，我们后面再详细探讨。</p>
+<p><strong>Step<br>2：</strong> 从尾部开始遍历新的子序列，在遍历的过程中，如果新子序列中的节点在旧子序列中不存在，也就是 [newIndexToOldIndexMap[i]<br>=== 0]{.mark}，则新增节点。</p>
+<p><strong>Step<br>3：</strong> 判断是否存在节点移动的情况，如果存在的话则看节点的索引是不是在最长递增子序列中，如果不在，则将它移动到锚点的前面，否则仅移动最长子序列的尾部指针。</p>
+<p>针对上述例子中，新的子序列为 [e,c,d,i]{.mark}。最长递增子序列的索引为 [[1,<br>2]]{.mark}。开始遍历到 [i]{.mark} 节点时，因为 [newIndexToOldIndexMap[i]<br>=<br>0]{.mark} 所以新增，然后遍历到 [c,d]{.mark} 节点，因为存在于最长子序列中，所以最后 [j<br>= -1]{.mark}。当遍历到 [e]{.mark} 节点时，此时 [j =<br>-1]{.mark} 并且 [e]{.mark} 节点不存在于最长递增子序列索引中，索引最后一步就是把节点 [e]{.mark} 进行一次移动：</p>
+<p>move(nextChild, container, anchor, MoveType.REORDER)</p>
+<p>其中 [anchor]{.mark} 是参照物，记录着上一次更新的节点信息，也就是节点 [c]{.mark} 的信息，所以这里的意思就是将节点 [e]{.mark} 移动到节点 [c]{.mark} 前面。</p>
+<p>至此，完成了所有节点的增、删、更新、移动的操作，此次操作结果如下：</p>
+<p><img src="https://cdn-us.imgs.moe/2023/05/26/646f9bc37019e.png" alt="截图.png"></p>
+<p><strong>最长递增子序列</strong></p>
+<p>求最长递增子序列是 [LeetCode]{.mark} 上的一道经典算法题，原题：<a href="https://link.juejin.cn/?target=https%3A%2F%2Fleetcode.cn%2Fproblems%2Flongest-increasing-subsequence%2F">300. 最长递增子序列</a>。</p>
+<p>什么是上升子序列？简单来说指的是找到一个特定的最长的子序列，并且子序列中的所有元素单调递增。</p>
+<p>假设我们的序列为 [[5, 3, 4, 9]]{.mark} ，那么最长的递增子序列是 [[3,<br>4]]{.mark}。</p>
+<p>那么如何找到最长的递增子序列呢？[Vue]{.mark} 内部使用的是一套 [贪心 +<br>二分查找]{.mark} 的算法，关于贪心和二分查找的解释如下。</p>
+<p>贪心算法：贪心算法在每一步都做出了当时看起来最佳的选择，也就是说，它总是做出局部最优的选择，寄希望这样的选择能导致全局最优解。<a href="https://link.juejin.cn/?target=https%3A%2F%2Fleetcode.cn%2Fproblems%2Fassign-cookies%2Fdescription%2F">leetCode<br>455. 分发饼干。</a></p>
+<p>二分查找：每次的查找都是和区间的中间元素对比，将待查找的区间缩小为一半，直到找到目标元素，或者区间被缩小为<br>0（没找到）。<a href="https://link.juejin.cn/?target=https%3A%2F%2Fleetcode.cn%2Fproblems%2Fbinary-search%2F">leetCode<br>704. 二分查找。</a></p>
+<p>那么这里我们再结合一下贪心算法的思想，在求取最长上升子序列时，对于同样长度是二的序列 [[2,<br>3]]{.mark} 一定比 [[2,<br>5]]{.mark} 好，因为要想让子序列尽可能地长，那么上升得尽可能慢，这样潜力更大。</p>
+<p>所以我们可以创建一个临时数组，用来保存最长的递增子序列，如果当前遍历的元素大于临时数组中的最后一个元素（也就是临时数组的最大值）时，那么将其追加到临时数组的尾部，否则，查找临时数组，找到第一个大于该元素的数并替换它，这样就保证了临时数组上升时最慢的。因为是单调递增的序列，我们也可以在临时数组中用二分查找，降低时间复杂度。</p>
+<p>以输入序列 [[1, 4, 5, 2, 8, 7, 6,<br>0]]{.mark} 为例，根据上面算法的描述，我们大致可以得到如下的计算步骤：</p>
+<p>[1]</p>
+<p>[1, 4]</p>
+<p>[1, 4, 5]</p>
+<p>[1, 2, 5]</p>
+<p>[1, 2, 5, 8]</p>
+<p>[1, 2, 5, 7]</p>
+<p>[0, 2, 5, 6]</p>
+<p>可以看到，如果单纯地按照上述算法的模式，得到的结果的长度虽然一致，但位置顺序和值并不符合预期，预期结果是 [[1,<br>4, 5,<br>6]]{.mark}。那么在 [Vue]{.mark} 中是如何解决这个顺序和值错乱的问题呢？</p>
+<p>我们一起来看看源码的实现：</p>
+<p>function getSequence (arr) {</p>
+<p>const p = arr.slice()</p>
+<p>const result = [0]</p>
+<p>let i, j, u, v, c</p>
+<p>const len = arr.length</p>
+<p>for (i = 0; i &lt; len; i++) {</p>
+<p>const arrI = arr[i]</p>
+<p>// 排除等于 0 的情况</p>
+<p>if (arrI !== 0) {</p>
+<p>j = result[result.length - 1]</p>
+<p>// 与最后一项进行比较</p>
+<p>if (arr[j] &lt; arrI) {</p>
+<p>// 存储在 result 更新前的最后一个索引的值</p>
+<p>p[i] = j</p>
+<p>result.push(i)</p>
+<p>continue</p>
+<p>}</p>
+<p>u = 0</p>
+<p>v = result.length - 1</p>
+<p>// 二分搜索，查找比 arrI 小的节点，更新 result 的值</p>
+<p>while (u &lt; v) {</p>
+<p>// 取整得到当前位置</p>
+<p>c = ((u + v) / 2) | 0</p>
+<p>if (arr[result[c]] &lt; arrI) {</p>
+<p>u = c + 1</p>
+<p>}</p>
+<p>else {</p>
+<p>v = c</p>
+<p>}</p>
+<p>}</p>
+<p>if (arrI &lt; arr[result[u]]) {</p>
+<p>if (u &gt; 0) {</p>
+<p>// 正确的结果</p>
+<p>p[i] = result[u - 1]</p>
+<p>}</p>
+<p>// 有可能替换会导致结果不正确，需要一个新数组 p 记录正确的结果</p>
+<p>result[u] = i</p>
+<p>}</p>
+<p>}</p>
+<p>}</p>
+<p>u = result.length</p>
+<p>v = result[u - 1]</p>
+<p>// 回溯数组 p，找到最终的索引</p>
+<p>while (u-- &gt; 0) {</p>
+<p>result[u] = v</p>
+<p>v = p[v]</p>
+<p>}</p>
+<p>return result</p>
+<p>}</p>
+<p>其中 [result]{.mark} 中存储的是长度为 [i]{.mark} 的递增子序列最小末尾值的索引。[p]{.mark} 是来存储在每次更新 [result]{.mark} 前最后一个索引的值，并且它的 [key]{.mark} 是这次要更新的 [result]{.mark} 值：</p>
+<p> // 插入</p>
+<p>p[i] = j</p>
+<p>result.push(i)</p>
+<p>// 替换</p>
+<p>p[i] = result[u - 1]</p>
+<p>result[u] = i</p>
+<p>对于上述的实例，我们在进行最后一步回溯数组 [p]{.mark} 之前，得到的数据机构如下：</p>
+<p>result = [ 0, 3, 2, 6 ] // =&gt; [0, 2, 5, 6]</p>
+<p>p = [1, 0, 1, 0, 2, 2, 2]</p>
+<p>从 [result]{.mark} 最后一个元素 [6]{.mark} 对应的索引 [6]{.mark} 开始回溯，可以看到 [p[6]<br>= 2]{.mark}，[p[2] = 1]{.mark}，[p[1] =<br>0]{.mark}，所以通过对 [p]{.mark} 的回溯，得到最终的 [result]{.mark} 值是 [[0,<br>1, 2, 6]]{.mark}，也就找到最长递增子序列的最终索引了。</p>
+<p><strong>总结</strong></p>
+<p>至此我们介绍完了关于 [Vue3]{.mark} 的 [diff]{.mark} 算法。</p>
+</div><div class="article-tags size-small is-uppercase mb-4"><i class="fas fa-tags has-text-grey"></i> <a class="link-muted mr-2" rel="tag" href="/tags/%E5%89%8D%E7%AB%AF/">前端</a></div><div class="recommend-post"><span class="is-size-6 has-text-grey has-mr-7"># 推荐文章</span><br><span>  1.<a class="is-size-6" href="/posts/39441e6f/" target="_blank">响应式原理：Vue 3 的 nextTick ？</a><br></span><span>  2.<a class="is-size-6" href="/posts/91e84f90/" target="_blank">响应式原理：副作用函数探秘</a><br></span><span>  3.<a class="is-size-6" href="/posts/bf54f4c/" target="_blank">响应式原理：基于 Proxy 的响应式是什么样的？</a><br></span><span>  4.<a class="is-size-6" href="/posts/16c5c5d5/" target="_blank">渲染器：数组子节点的 diff 算法</a><br></span><span>  5.<a class="is-size-6" href="/posts/8d428288/" target="_blank">渲染器：组件是如何完成更新的？</a><br></span></div></article></div><div class="card"><div class="card-content"><h3 class="menu-label has-text-centered">喜欢这篇文章？打赏一下作者吧</h3><div class="buttons is-centered"><a class="button is-info donate"><span class="icon is-small"><i class="fab fa-alipay"></i></span><span>支付宝</span><span class="qrcode"><img src="https://cdn-us.imgs.moe/2023/05/26/646fb97e763cc.jpg" alt="支付宝"></span></a><a class="button is-success donate"><span class="icon is-small"><i class="fab fa-weixin"></i></span><span>微信</span><span class="qrcode"><img src="https://cdn-us.imgs.moe/2023/05/26/646fb97e763da.jpg" alt="微信"></span></a></div></div></div><nav class="post-navigation mt-4 level is-mobile"><div class="level-start"><a class="article-nav-prev level level-item link-muted" href="/posts/bf54f4c/"><i class="level-item fas fa-chevron-left"></i><span class="level-item">响应式原理：基于 Proxy 的响应式是什么样的？</span></a></div><div class="level-end"><a class="article-nav-next level level-item link-muted" href="/posts/8d428288/"><span class="level-item">渲染器：组件是如何完成更新的？</span><i class="level-item fas fa-chevron-right"></i></a></div></nav></div><div class="column column-left is-4-tablet is-4-desktop is-4-widescreen  order-1 is-sticky"><!--!--><div class="card widget"><div class="card-content"><nav class="level"><div class="level-item has-text-centered flex-shrink-1"><div><figure class="image is-128x128 mx-auto mb-2"><img class="is-rounded" src="https://p3-passport.byteimg.com/img/user-avatar/d8bc7351ac3c93b11cd3146be24a0cba~100x100.awebp" alt="爷ゝ本霸气っ"></figure><p class="title is-size-4 is-block line-height-inherit">爷ゝ本霸气っ</p><p class="is-size-6 is-block">我欲乘风去，昔年化龙归</p><p class="is-size-6 is-flex justify-content-center"><i class="fas fa-map-marker-alt mr-1"></i><span>鹏城</span></p></div></div></nav><nav class="level is-mobile"><div class="level-item has-text-centered is-marginless"><div><p class="heading">文章</p><a href="/archives"><p class="title">22</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">分类</p><a href="/categories"><p class="title">7</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">标签</p><a href="/tags"><p class="title">6</p></a></div></div></nav><hr><p id="hitokoto">:D 舔狗日记获取中...</p><script type="text/javascript" defer>
+                                // 获取舔狗日记
+                                const randomTianDogData = function (list) {
+                                    // 随机取出一个元素
+                                    const randomIndex = Math.floor(Math.random() * list.length); // 生成 0 到 list.length-1 之间的整数
+                                    return list[randomIndex]; // 根据随机下标获取数组中的元素
+                                }
+                                // 获取年月日
+                                const randomTianDogDate = function () {
+                                    // 获取 1970 年 1 月 1 日至今的毫秒数范围
+                                    const minTimestamp = new Date('2020-01-01').getTime();
+                                    const maxTimestamp = new Date().getTime();
+                        
+                                    // 生成指定范围内的随机日期
+                                    const randomTimestamp = Math.floor(Math.random() * (maxTimestamp - minTimestamp)) + minTimestamp;
+                                    const randomDate = new Date(randomTimestamp);
+                        
+                                    // 获取随机日期的年、月、日
+                                    const year = randomDate.getFullYear();
+                                    const month = randomDate.getMonth() + 1;
+                                    const day = randomDate.getDate();
+                        
+                                    return year + '-' + month + '-' + day // 输出随机的年月日
+                                }
+
+                                function getYiyan(){
+                                    $.when(
+                                      $.getJSON('http://111.230.213.88/mockData/weathers.json'),
+                                      $.getJSON('http://111.230.213.88/mockData/diaries.json')
+                                    ).done(function(data1, data2) {
+                                      // 在这里对两个接口的数据进行操作
+                                      $('#hitokoto').html("");
+                                      $('#hitokoto').append(
+                                        "<p>" + randomTianDogDate() + "</p><p>" + randomTianDogData(data1[0]) + "</p>" +
+                                        "<strong style='color: #3273dc;'>" + randomTianDogData(data2[0]) + "</strong>"
+                                      );  
+                                    }).fail(function() {
+                                      console.log('Error: 舔狗日记获取失败.');
+                                    });
+                                }
+                                $(function (){getYiyan();$('#hitokoto').click(function(){getYiyan();})});</script></div></div><!--!--><div class="card widget"><div class="card-content"><h3 class="menu-label">最新文章</h3><article class="media"><a class="media-left" href="/posts/658c93f2/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646fa77438c98.png" alt="模块标准：为什么 ESM 是前端模块化的未来？"></p></a><div class="media-content size-small"><p><time dateTime="2022-09-17T11:13:16.000Z">2022-09-17</time></p><p class="title is-6"><a class="link-muted" href="/posts/658c93f2/">模块标准：为什么 ESM 是前端模块化的未来？</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAVite/">深入浅出Vite</a></p></div></article><article class="media"><a class="media-left" href="/posts/e76f424e/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646fa4ee2fa1b.png" alt="让 Vite 助力你的前端工程化之路"></p></a><div class="media-content size-small"><p><time dateTime="2022-09-07T11:13:16.000Z">2022-09-07</time></p><p class="title is-6"><a class="link-muted" href="/posts/e76f424e/">让 Vite 助力你的前端工程化之路</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAVite/">深入浅出Vite</a></p></div></article><article class="media"><a class="media-left" href="/posts/39441e6f/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646f9fde778cf.png" alt="响应式原理：Vue 3 的 nextTick ？"></p></a><div class="media-content size-small"><p><time dateTime="2022-08-27T11:13:16.000Z">2022-08-27</time></p><p class="title is-6"><a class="link-muted" href="/posts/39441e6f/">响应式原理：Vue 3 的 nextTick ？</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/">深入Vue3原理</a></p></div></article><article class="media"><a class="media-left" href="/posts/91e84f90/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646f9fde38e7e.png" alt="响应式原理：副作用函数探秘"></p></a><div class="media-content size-small"><p><time dateTime="2022-08-17T11:13:16.000Z">2022-08-17</time></p><p class="title is-6"><a class="link-muted" href="/posts/91e84f90/">响应式原理：副作用函数探秘</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/">深入Vue3原理</a></p></div></article><article class="media"><a class="media-left" href="/posts/bf54f4c/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646f9dbdbc919.png" alt="响应式原理：基于 Proxy 的响应式是什么样的？"></p></a><div class="media-content size-small"><p><time dateTime="2022-08-07T11:13:16.000Z">2022-08-07</time></p><p class="title is-6"><a class="link-muted" href="/posts/bf54f4c/">响应式原理：基于 Proxy 的响应式是什么样的？</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/">深入Vue3原理</a></p></div></article></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">分类</h3><ul class="menu-list"><li><a class="level is-mobile is-marginless" href="/categories/%E5%89%8D%E7%AB%AF/"><span class="level-start"><span class="level-item">前端</span></span><span class="level-end"><span class="level-item tag">10</span></span></a><ul class="mr-0"><li><a class="level is-mobile is-marginless" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/"><span class="level-start"><span class="level-item">深入Vue3原理</span></span><span class="level-end"><span class="level-item tag">8</span></span></a></li><li><a class="level is-mobile is-marginless" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAVite/"><span class="level-start"><span class="level-item">深入浅出Vite</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li></ul></li><li><a class="level is-mobile is-marginless" href="/categories/%E5%B7%A5%E5%85%B7%E6%95%99%E7%A8%8B/"><span class="level-start"><span class="level-item">工具教程</span></span><span class="level-end"><span class="level-item tag">4</span></span></a><ul class="mr-0"><li><a class="level is-mobile is-marginless" href="/categories/%E5%B7%A5%E5%85%B7%E6%95%99%E7%A8%8B/%E4%B8%BB%E9%A2%98%E5%B7%A5%E5%85%B7/"><span class="level-start"><span class="level-item">主题工具</span></span><span class="level-end"><span class="level-item tag">4</span></span></a></li></ul></li><li><a class="level is-mobile is-marginless" href="/categories/%E6%96%87%E7%AB%A0%E5%8A%A0%E5%AF%86/"><span class="level-start"><span class="level-item">文章加密</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/categories/%E6%B3%95%E5%BE%8B/"><span class="level-start"><span class="level-item">法律</span></span><span class="level-end"><span class="level-item tag">7</span></span></a></li></ul></div></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">归档</h3><ul class="menu-list"><li><a class="level is-mobile is-marginless" href="/archives/2022/09/"><span class="level-start"><span class="level-item">九月 2022</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2022/08/"><span class="level-start"><span class="level-item">八月 2022</span></span><span class="level-end"><span class="level-item tag">3</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2022/07/"><span class="level-start"><span class="level-item">七月 2022</span></span><span class="level-end"><span class="level-item tag">3</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2022/06/"><span class="level-start"><span class="level-item">六月 2022</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2020/01/"><span class="level-start"><span class="level-item">一月 2020</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><a class="level is-mobile is-marginless" href="/archives/"><span class="level-start"><span class="level-item">查看全部&gt;&gt;</span></span></a></ul></div></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">标签</h3><div class="field is-grouped is-grouped-multiline"><div class="control"><a class="tags has-addons" href="/tags/%E5%89%8D%E7%AB%AF/"><span class="tag">前端</span><span class="tag is-grey-lightest">10</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E6%B3%95%E5%BE%8B/"><span class="tag">法律</span><span class="tag is-grey-lightest">7</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E5%B7%A5%E5%85%B7%E6%95%99%E7%A8%8B/"><span class="tag">工具教程</span><span class="tag is-grey-lightest">3</span></a></div><div class="control"><a class="tags has-addons" href="/tags/hexo%E4%B8%BB%E9%A2%98/"><span class="tag">hexo主题</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/icarus%E4%B8%BB%E9%A2%98%E9%85%8D%E7%BD%AE/"><span class="tag">icarus主题配置</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E5%8A%A0%E5%AF%86%E6%96%87%E7%AB%A0/"><span class="tag">加密文章</span><span class="tag is-grey-lightest">1</span></a></div></div></div></div></div><!--!--></div></div></div></section><footer class="footer"><div class="container"><div class="level"><div class="level-start"><a class="footer-logo is-block mb-2" href="/"><img src="https://s1.ax1x.com/2023/05/25/p9H4zND.png" alt="爷ゝ本霸气っ" height="28"></a><p class="size-small"><span>&copy; 2023 爷ゝ本霸气っ</span>  Powered by <a href="https://hexo.io/" target="_blank">Hexo</a> &amp; <a href="https://github.com/ppoffice/hexo-theme-icarus" target="_blank">Icarus</a>,Modify by <a href="https://github.com/Leon9916/hexo-blog" target="_blank">removeif</a> <br>© 版权2说明：[本网站所有内容均收集于互联网或自己创作,<br>    方便于自己学习交流，如有侵权，请<a href="mailto:2476288442@qq.com">联系</a>，立即处理]<br><script type="text/javascript" src="/js/statistics.js"></script><span id="statistic-times">网站运行时间统计加载中...</span></p></div><div class="level-end"></div></div></div></footer><script src="https://cdn.jsdelivr.net/npm/moment@2.22.2/min/moment-with-locales.min.js"></script><script>moment.locale("zh-CN");</script><script>var IcarusThemeSettings = {
+            site: {
+                url: 'https://removeif.github.io',
+                external_link: {"enable":true,"exclude":[]}
+            },
+            article: {
+                highlight: {
+                    clipboard: true,
+                    fold: 'unfolded'
+                }
+            }
+        };</script><script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.4/dist/clipboard.min.js" defer></script><script src="/js/animation.js"></script><a id="back-to-top" title="回到顶端" href="javascript:;"><i class="fas fa-chevron-up"></i></a><script src="/js/back-to-top.js" defer></script><!--!--><!--!--><script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/js/lightgallery.min.js" defer></script><script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js" defer></script><script src="/js/gallery.js" defer></script><!--!--><!--!--><!--!--><script src="/js/main.js" defer></script><script src="/js/comment-issue-data.js" defer></script><link rel="stylesheet" href="/css/insight.css"><div class="searchbox ins-search"><div class="searchbox-container ins-search-container"><div class="searchbox-input-wrapper"><input class="searchbox-input ins-search-input" type="text" placeholder="想要查找什么..."><span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span></div><div class="searchbox-result-wrapper ins-section-wrapper"><div class="ins-section-container"></div></div></div></div><script>(function (window) {
+            var INSIGHT_CONFIG = {
+                TRANSLATION: {
+                    POSTS: '文章',
+                    PAGES: '页面',
+                    CATEGORIES: '分类',
+                    TAGS: '标签',
+                    UNTITLED: '(无标题)',
+                },
+                CONTENT_URL: '/content.json',
+            };
+            window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+        })(window);</script><script src="/js/insight.js" defer></script></body></html>

@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="generator" content="Hexo 4.2.1"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta><title>模块标准：为什么 ESM 是前端模块化的未来？ - 爷ゝ本霸气っ</title><meta description="技术分享,前端开发,数据接口,算法"><meta property="og:type" content="blog"><meta property="og:title" content="爷ゝ本霸气っ"><meta property="og:url" content="https://removeif.github.io/"><meta property="og:site_name" content="爷ゝ本霸气っ"><meta property="og:description" content="技术分享,前端开发,数据接口,算法"><meta property="og:locale" content="zh_CN"><meta property="og:image" content="https://p3-passport.byteimg.com/img/user-avatar/d8bc7351ac3c93b11cd3146be24a0cba~100x100.awebp"><meta property="article:published_time" content="2022-09-17T11:13:16.000Z"><meta property="article:modified_time" content="2023-05-25T18:26:37.090Z"><meta property="article:author" content="removeif"><meta property="article:tag" content="categories-tool"><meta property="twitter:card" content="summary"><meta property="twitter:image" content="https://p3-passport.byteimg.com/img/user-avatar/d8bc7351ac3c93b11cd3146be24a0cba~100x100.awebp"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://removeif.github.io/"},"headline":"爷ゝ本霸气っ","image":[],"datePublished":"2022-09-17T11:13:16.000Z","dateModified":"2023-05-25T18:26:37.090Z","author":{"@type":"Person","name":"removeif"},"description":"技术分享,前端开发,数据接口,算法"}</script><link rel="alternative" href="/atom.xml" title="爷ゝ本霸气っ" type="application/atom+xml"><link rel="icon" href="https://p3-passport.byteimg.com/img/user-avatar/d8bc7351ac3c93b11cd3146be24a0cba~100x100.awebp"><link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.0/css/all.css"><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu:400,600|Source+Code+Pro"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@9.12.0/styles/atom-one-dark.css"><link rel="stylesheet" href="//fonts.googleapis.com/css?family=Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Microsoft YaHei:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&amp;amp;subset=latin,latin-ext"><style>body>.footer,body>.navbar,body>.section{opacity:1}</style><!--!--><!--!--><script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" defer></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/css/justifiedGallery.min.css"><!--!--><!--!--><script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script><link rel="stylesheet" href="/css/style.css"><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script><script src="/js/globalUtils.js"></script><link rel="stylesheet" href="/live2d/waifu.css"><script type="text/javascript" async src="/live2d/autoload.js"></script></head><body class="is-3-column has-navbar-fixed-top"><nav class="navbar navbar-main is-fixed-top"><div class="container"><div class="navbar-brand justify-content-center"><a class="navbar-item navbar-logo" href="/"><img src="https://s1.ax1x.com/2023/05/25/p9H4zND.png" alt="爷ゝ本霸气っ" height="28"></a></div><div class="navbar-menu"><div class="navbar-start"><a class="navbar-item" href="/">首页</a><a class="navbar-item" href="/categories">分类</a><a class="navbar-item" href="/media">影音</a><a class="navbar-item" href="/album">相册</a><a class="navbar-item" href="/about">关于</a><a class="navbar-item" href="/chat_brother">Chat哥</a></div><div class="navbar-end"><a class="navbar-item" target="_blank" rel="noopener" title="Download on GitHub" href="https://github.com/Leon9916/hexo-blog"><i class="fab fa-github"></i></a><a class="navbar-item is-hidden-tablet catalogue" title="目录" href="javascript:;"><i class="fas fa-list-ul"></i></a><a class="navbar-item search" title="搜索" href="javascript:;"><i class="fas fa-search"></i></a><a class="navbar-item" id="night-nav" title="Night Mode" href="javascript:;"><i class="fas fa-moon" id="night-icon"></i></a></div></div></div></nav><script type="text/javascript" src="/js/theme-setting.js"></script><section class="section"><div class="container"><div class="columns"><div class="column order-2 column-main is-8-tablet is-8-desktop is-9-widescreen"><div class="card"><div class="card-image"><span class="image is-7by3"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646fa77438c98.png" alt="模块标准：为什么 ESM 是前端模块化的未来？"></span></div><article class="card-content article" role="article"><div class="article-meta size-small is-uppercase level is-mobile"><div class="level-left"><span class="level-item"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a><span> / </span><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAVite/">深入浅出Vite</a></span><span class="level-item">27 分钟 读完 (大约 4024 个字)</span></div></div><h1 class="title is-3 is-size-4-mobile">模块标准：为什么 ESM 是前端模块化的未来？</h1><div class="content"><blockquote>
+<p>2002 年 AJAX<br>诞生至今，前端从刀耕火种的年代，经历了一系列的发展，各种标准和工具百花齐放。<br>下图中我们可以看到，自 2009 年 Node.js 诞生，前端先后出现了<br>CommonJS、AMD、CMD、UMD和ES<br>Module等模块规范，底层规范的发展催生出了一系列工具链的创新，比如 AMD<br>规范提出时社区诞生 的模块加载工具requireJS，基于 CommonJS<br>规范的模块打包工具browserify，还有能让用户提前用 上 ES Module语法的 JS<br>编译器Babel、兼容各种模块规范的重量级打包工具Webpack以及基于浏览器原 生<br>ES Module 支持而实现的 <strong>no-bundle</strong> 构建工具</p>
+</blockquote>
+<a id="more"></a>
+
+<p>2002 年 AJAX<br>诞生至今，前端从刀耕火种的年代，经历了一系列的发展，各种标准和工具百花齐放。<br>下图中我们可以看到，自 2009 年 Node.js 诞生，前端先后出现了<br>CommonJS、AMD、CMD、UMD和ES<br>Module等模块规范，底层规范的发展催生出了一系列工具链的创新，比如 AMD<br>规范提出时社区诞生 的模块加载工具requireJS，基于 CommonJS<br>规范的模块打包工具browserify，还有能让用户提前用 上 ES Module语法的 JS<br>编译器Babel、兼容各种模块规范的重量级打包工具Webpack以及基于浏览器原 生<br>ES Module 支持而实现的 <strong>no-bundle</strong> 构建工具<br>Vite等等。<img src="https://cdn-us.imgs.moe/2023/05/26/646fa77438c98.png" alt=""></p>
+<p>总体而言，业界经历了一系列<strong>由规范、标准引领工程化改革</strong>的过程。构建工具作为前端工程化的核心<br>要素，与底层的前端模块化规范和标准息息相关。接下来的时间，我就带你梳理一下前端模块化是如<br>何演进的。这样你能更清楚地了解到各种模块化标准诞生的背景和意义，也能更好地理解<br>ES Module 为什么能够成为现今最主流的前端模块化标准。</p>
+<p><strong>无模块化标准阶段</strong><br>早在模块化标准还没有诞生的时候，前端界已经产生了一些模块化的开发手段，如文件划分、命名空间<br>和 IIFE 私有作用域。下面，我来简单介绍一下它们的实现以及背后存在的问题。</p>
+<p><strong>1.</strong> <strong>文件划分</strong><br>文件划分方式是最原始的模块化实现，简单来说就是将应用的状态和逻辑分散到不同的文件中，然后<br>通过 HTML 中的 script<br>来一一引入。下面是一个通过文件划分实现模块化的具体例子:</p>
+<blockquote>
+<p>1// module-a.js</p>
+</blockquote>
+<blockquote>
+<p>3</p>
+<p>1// module-b.js</p>
+<p>2 function method() {</p>
+<p>3 console.log(&quot;execute method&quot;);</p>
+<p>4 }</p>
+<p>5</p>
+<p>1 // index.html</p>
+<p>2 &lt;!DOCTYPE html&gt;</p>
+<p>3 &lt;html lang=&quot;en&quot;&gt;</p>
+<p>4 &lt;head&gt;</p>
+<p>5 &lt;meta charset=&quot;UTF-8&quot; /&gt;</p>
+<p>6 &lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;IE=edge&quot; /&gt;</p>
+<p>7 &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,<br>initial-scale=1.0&quot; /&gt;</p>
+<p>8 &lt;title&gt;Document&lt;/title&gt;</p>
+<p>9 &lt;/head&gt;</p>
+<p>10 &lt;body&gt;</p>
+<p>11 &lt;script src=&quot;./module-a.js&quot;&gt;&lt;/script&gt;</p>
+<p>12 &lt;script src=&quot;./module-b.js&quot;&gt;&lt;/script&gt;</p>
+<p>13 &lt;script&gt;</p>
+<p>14 console.log(data);</p>
+<p>15 method();</p>
+<p>16 &lt;/script&gt;</p>
+<p>17 &lt;/body&gt;</p>
+<p>18 &lt;/html&gt;</p>
+<p>19</p>
+</blockquote>
+<p>从中可以看到module-a和module-b为两个不同的模块，通过两个 script<br>标签分别引入到 HTML 中，这<br>么做看似是分散了不同模块的状态和运行逻辑，但实际上也隐藏着一些风险因素:</p>
+<blockquote>
+<p>1.模块变量相当于在全局声明和定义，会有变量名冲突的问题。比如<br>module-b可能也存在data变量，这就会与 module-a中的变量冲突。</p>
+<p>2.由于变量都在全局定义，我们很难知道某个变量到底属于哪些模块，因此也给调试带来了困难。</p>
+<p>3.无法清晰地管理模块之间的依赖关系和加载顺序。假如</p>
+</blockquote>
+<p>module-a依赖module-b，那么上述 HTML 的 script<br>执行顺序需要手动调整，不然可能会产生运行时错 误。</p>
+<p><strong>2.</strong> <strong>命名空间</strong></p>
+<p>命名空间是模块化的另一种实现手段，它可以解决上述文件划分方式中全局变量定义所带来的一系列问<br>题。下面是一个简单的例子:</p>
+<blockquote>
+<p>1// module-a.js</p>
+</blockquote>
+<blockquote>
+<p>8</p>
+<p>1// module-b.js</p>
+</blockquote>
+<blockquote>
+<p>8</p>
+<p>1 &lt;!DOCTYPE html&gt;</p>
+<p>2 &lt;html lang=&quot;en&quot;&gt;</p>
+<p>3 &lt;head&gt;</p>
+<p>4 &lt;meta charset=&quot;UTF-8&quot; /&gt;</p>
+<p>5 &lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;IE=edge&quot; /&gt;</p>
+<p>6 &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,<br>initial-scale=1.0&quot; /&gt;</p>
+<p>7 &lt;title&gt;Document&lt;/title&gt;</p>
+<p>8 &lt;/head&gt;</p>
+<p>9 &lt;body&gt;</p>
+<p>10 &lt;script src=&quot;./module-a.js&quot;&gt;&lt;/script&gt;</p>
+<p>11 &lt;script src=&quot;./module-b.js&quot;&gt;&lt;/script&gt;</p>
+<p>12 &lt;script&gt;</p>
+<p>13 // 此时 window 上已经绑定了 moduleA 和 moduleB</p>
+<p>14 console.log(moduleA.data);</p>
+<p>15 moduleB.method();</p>
+<p>16 &lt;/script&gt;</p>
+<p>17 &lt;/body&gt;</p>
+<p>18 &lt;/html&gt;</p>
+<p>19</p>
+</blockquote>
+<p>这样一来，每个变量都有自己专属的命名空间，我们可以清楚地知道某个变量到底属于哪个模块，同时<br>也避免全局变量命名的问题。</p>
+<p><strong>3.</strong> <strong>IIFE(立即执行函数)</strong><br>不过，相比于命名空间的模块化手段，IIFE实现的模块化安全性要更高，对于模块作用域的区分更加彻<br>底。你可以参考如下IIFE 实现模块化的例子:</p>
+<blockquote>
+<p>1// module-a.js</p>
+</blockquote>
+<blockquote>
+<p>13</p>
+<p>1// module-b.js</p>
+</blockquote>
+<blockquote>
+<p>13</p>
+<p>1 // index.html</p>
+<p>2 &lt;!DOCTYPE html&gt;</p>
+<p>3 &lt;html lang=&quot;en&quot;&gt;</p>
+<p>4 &lt;head&gt;</p>
+<p>5 &lt;meta charset=&quot;UTF-8&quot; /&gt;</p>
+<p>6 &lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;IE=edge&quot; /&gt;</p>
+<p>7 &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,<br>initial-scale=1.0&quot; /&gt;</p>
+<p>8 &lt;title&gt;Document&lt;/title&gt;</p>
+<p>9 &lt;/head&gt;</p>
+<p>10 &lt;body&gt;</p>
+<p>11 &lt;script src=&quot;./module-a.js&quot;&gt;&lt;/script&gt;</p>
+<p>12 &lt;script src=&quot;./module-b.js&quot;&gt;&lt;/script&gt;</p>
+<p>13 &lt;script&gt;</p>
+<p>14 // 此时 window 上已经绑定了 moduleA 和 moduleB</p>
+<p>15 console.log(moduleA.data);</p>
+<p>16 moduleB.method();</p>
+<p>17 &lt;/script&gt;</p>
+<p>18 &lt;/body&gt;</p>
+<p>19 &lt;/html&gt;</p>
+<p>20</p>
+</blockquote>
+<p>我们知道，每个IIFE即立即执行函数都会创建一个私有的作用域，在私有作用域中的变量外界是无法访<br>问的，只有模块内部的方法才能访问。拿上述的module-a来说:</p>
+<blockquote>
+<p>1// module-a.js</p>
+</blockquote>
+<blockquote>
+<p>13</p>
+</blockquote>
+<p>对于其中的 data变量，我们只能在模块内部的<br>method函数中通过闭包访问，而在其它模块中无法直接<br>访问。这就是模块私有成员功能，避免模块私有成员被其他模块非法篡改，相比于命名空间的实现方式更<br>加安全。<br>但实际上，无论是命名空间还是IIFE，都是为了解决全局变量所带来的命名冲突及作用域不明确的问<br>题，也就是在文件划分方式中所总结的问题 1和问题<br>2，而并没有真正解决另外一个问题——<strong>模块加载</strong>。<br>如果模块间存在依赖关系，那么 script<br>标签的加载顺序就需要受到严格的控制，一旦顺序不对，则很 有可能产生运行时<br>Bug。<br>而随着前端工程的日益庞大，各个模块之间相互依赖已经是非常常见的事情，模块加载的需求已经成<br>为了业界刚需，而以上的几种非标准模块化手段不能满足这个需求，因此我们需要指定一个行业标准<br>去统一前端代码的模块化。<br>不过前端的模块化规范统一也经历了漫长的发展阶段，即便是到现在也没有实现完全的统一。接下<br>来，我们就来熟悉一下业界主流的三大模块规范: CommonJS、AMD和 ES Module。</p>
+<p><strong>CommonJS</strong> <strong>规范</strong></p>
+<p>CommonJS 是业界最早正式提出的 JavaScript 模块规范，主要用于服务端，随着<br>Node.js 越来越普<br>及，这个规范也被业界广泛应用。对于模块规范而言，一般会包含 2 方面内容:</p>
+<blockquote>
+<p>统一的模块化代码规范</p>
+</blockquote>
+<p>实现自动加载模块的加载器(也称 loader)</p>
+<p>对于 CommonJS 模块规范本身，相信有 Node.js<br>使用经验的同学都不陌生了，为了方便你理解，我 举一个使用 CommonJS<br>的简单例子:</p>
+<blockquote>
+<p>1// module-a.js</p>
+</blockquote>
+<blockquote>
+<p>13</p>
+</blockquote>
+<p>代码中使用 require来导入一个模块，用module.exports来导出一个模块。实际上<br>Node.js 内部会有 相应的 loader<br>转译模块代码，最后模块代码会被处理成下面这样:</p>
+<blockquote>
+<p>1(function (exports, require, module, __filename,<br>__dirname) {</p>
+<p>2 // 执行模块代码</p>
+<p>3 // 返回 exports 对象</p>
+<p>4 });</p>
+<p>5</p>
+</blockquote>
+<p>对 CommonJS 而言，一方面它定义了一套完整的模块化代码规范，另一方面<br>Node.js 为之实现了自<br>动加载模块的loader，看上去是一个很不错的模块规范，但也存在一些问题:</p>
+<blockquote>
+<p>1.模块加载器由 Node.js 提供，依赖了 Node.js<br>本身的功能实现，比如文件系统，如果 CommonJS 模块直接放到<br>浏览器中是无法执行的。当然, 业界也产生了<br><a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Fbrowserify%2Fbrowserify">browserify</a><br>这种打包工具来支持打包 CommonJS 模块，从而顺<br>利在浏览器中执行，相当于社区实现了一个第三方的 loader。</p>
+<p>2.CommonJS<br>本身约定以同步的方式进行模块加载，这种加载机制放在服务端是没问题的，一来模块都在本地，<br>不需要进行网络<br>IO，二来只有服务启动时才会加载模块，而服务通常启动后会一直运行，所以对服务的性能并没<br>有太大的影响。但如果这种加载机制放到浏览器端，会带来明显的性能问题。它会产生大量同步的模块请求，浏<br>览器要等待响应返回后才能继续解析模块。也就是说，<strong>模块请求会造成浏览器</strong><br><strong>JS</strong> <strong>解析过程的阻塞</strong>，导致页面加 载速度缓慢。</p>
+</blockquote>
+<p>总之，CommonJS<br>是一个不太适合在浏览器中运行的模块规范。因此，业界也设计出了全新的规范来<br>作为浏览器端的模块标准，最知名的要数 AMD了。</p>
+<p><strong>AMD</strong> <strong>规范</strong></p>
+<p>AMD全称为Asynchronous Module<br>Definition，即异步模块定义规范。模块根据这个规范，在浏览器环<br>境中会被异步加载，而不会像 CommonJS<br>规范进行同步加载，也就不会产生同步请求导致的浏览器<br>解析过程阻塞的问题了。我们先来看看这个模块规范是如何来使用的:</p>
+<blockquote>
+<p>1// main.js</p>
+</blockquote>
+<blockquote>
+<p>14</p>
+</blockquote>
+<p>在 AMD 规范当中，我们可以通过 define 去定义或加载一个模块，比如上面的<br>main模块和print模 块，如果模块需要导出一些成员需要通过在定义模块的函数中<br>return 出去(参考 print模块)，如果当 前模块依赖了一些其它的模块则可以通过<br>define 的第一个参数来声明依赖(参考main模块)，这样模块<br>的代码执行之前浏览器会先<strong>加载依赖模块</strong>。</p>
+<p>当然，你也可以使用 require 关键字来加载一个模块，如:</p>
+<blockquote>
+<p>1// module-a.js</p>
+<p>2 require([&quot;./print.js&quot;], function (printModule) {</p>
+<p>3 printModule.print(&quot;module-a&quot;);</p>
+<p>4 });</p>
+<p>5</p>
+</blockquote>
+<p>不过 require 与 define 的区别在于前者只能加载模块，而不能定义一个模块。<br><a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Frequirejs%2Frequirejs">由于没有得到浏览器的原生支持，AMD 规范需要由第三方的 loader<br>来实现，最经典的就是<br>requireJ</a><br><a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Frequirejs%2Frequirejs">S 库了，它完整实现了 AMD<br>规范，至今仍然有不少项目在使用。</a></p>
+<p>不过 AMD<br>规范使用起来稍显复杂，代码阅读和书写都比较困难。因此，这个规范并不能成为前端模<br>块化的终极解决方案，仅仅是社区中提出的一个妥协性的方案，关于新的模块化规范的探索，业界从<br>仍未停止脚步。</p>
+<p>同期出现的规范当中也有 CMD<br>规范，这个规范是由淘宝出品的SeaJS实现的，解决的问题和 AMD 一<br>样。不过随着社区的不断发展，SeaJS 已经被requireJS兼容了。</p>
+<blockquote>
+<p>当然，你可能也听说过 UMD(Universal Module<br>Definition)规范，其实它并不算一个新的规范， 只是兼容 AMD 和 CommonJS<br>的一个模块化方案，可以同时运行在浏览器和 Node.js 环境。顺<br>便提一句，后面将要介绍的 ES Module 也具备这种跨平台的能力。</p>
+</blockquote>
+<p><strong>ES6</strong> <strong>Module</strong></p>
+<p>ES6 Module也被称作 ES Module(或 ESM)， 是由 ECMAScript<br>官方提出的模块化规范，作为一个官方提 出的规范，ES<br>Module已经得到了现代浏览器的内置支持。在现代浏览器中，如果在 HTML<br>中加入含 有type=&quot;module&quot;属性的 script 标签，那么浏览器会按照 ES Module<br>规范来进行依赖加载和模块解 析，这也是 Vite 在开发阶段实现 no-bundle<br>的原因，由于模块加载的任务交给了浏览器，即使不打<br>包也可以顺利运行模块代码，具体的模块加载流程我们会在下一节进行详细的解释。</p>
+<p>大家可能会担心 ES Module 的兼容性问题，其实 ES Module<br>的浏览器兼容性如今已经相当好了，覆 盖了 90% 以上的浏览器份额，在<br><a href="https://link.juejin.cn/?target=https%3A%2F%2Fcaniuse.com%2F">CanIUse</a><br>上的详情数据如下图所示:</p>
+<p>不仅如此，一直以 CommonJS 作为模块标准的 Node.js 也紧跟 ES Module<br>的发展步伐，</p>
+<p>从<br>12.20版本开<a href="https://link.juejin.cn/?target=https%3A%2F%2Fnodejs.org%2Fapi%2Fesm.html%23modules-ecmascript-modules">始正式支持</a>原生<br>ES Module。也就是说，如今 ES Module 能够同时在浏览器与 Node.js<br>环境中执行，拥有天然的跨平台能力。</p>
+<p>下面是一个使用 ES Module 的简单例子:</p>
+<blockquote>
+<p>1// main.js</p>
+</blockquote>
+<blockquote>
+<p>11</p>
+<p>1 &lt;!DOCTYPE html&gt;</p>
+<p>2 &lt;html lang=&quot;en&quot;&gt;</p>
+<p>3 &lt;head&gt;</p>
+<p>4 &lt;meta charset=&quot;UTF-8&quot; /&gt;</p>
+<p>5 &lt;link rel=&quot;icon&quot; type=&quot;image/svg+xml&quot; href=&quot;/src/favicon.svg&quot;<br>/&gt;</p>
+<p>6 &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,<br>initial-scale=1.0&quot; /&gt;</p>
+<p>7 &lt;title&gt;Vite App&lt;/title&gt;</p>
+<p>8 &lt;/head&gt;</p>
+<p>9 &lt;body&gt;</p>
+<p>10 &lt;div id=&quot;root&quot;&gt;&lt;/div&gt;</p>
+<p>11 &lt;script type=&quot;module&quot; src=&quot;./main.js&quot;&gt;&lt;/script&gt;</p>
+<p>12 &lt;/body&gt;</p>
+<p>13 &lt;/html&gt;</p>
+<p>14</p>
+</blockquote>
+<p>如果在 Node.js 环境中，你可以在package.json中声明type: &quot;module&quot;属性:</p>
+<blockquote>
+<p>1// package.json</p>
+</blockquote>
+<blockquote>
+<p>5</p>
+</blockquote>
+<p>然后 Node.js 便会默认以 ES Module 规范去解析模块:</p>
+<blockquote>
+<p>1node main.js</p>
+<p>2 // 打印 a</p>
+<p>3</p>
+</blockquote>
+<p>顺便说一句，在 Node.js 中，即使是在 CommonJS 模块里面，也可以通过<br>import方法顺利加载 ES 模块，如下所示:</p>
+<blockquote>
+<p>1async function func() {</p>
+</blockquote>
+<p>ES Module 作为 ECMAScript<br>官方提出的规范，经过五年多的发展，不仅得到了众多浏览器的原生支 持，也在<br>Node.js<br>中得到了原生支持，是一个能够跨平台的模块规范。同时，它也是社区各种生态库<br>的发展趋势，尤其是被如今大火的构建工具 Vite 所深度应用。可以说，ES<br>Module 前景一片光明， 成为前端大一统的模块标准指日可待。</p>
+<p>当然，这一讲我们只简单介绍了<br>ESM。至于高级特性，我们将在「高级应用篇」专门介绍。你可以先<br>利用我这里给到的官方资料提前预习： <a href="https://link.juejin.cn/?target=https%3A%2F%2Fdeveloper.mozilla.org%2Fzh-CN%2Fdocs%2FWeb%2FJavaScript%2FGuide%2FModules">MDN<br>官方解释</a><a href="https://link.juejin.cn/?target=https%3A%2F%2F262.ecma-international.org%2F6.0%2F%23sec-modules">、ECMAScript<br>内部提案细节</a>。</p>
+<p><strong>小结</strong></p>
+<p>这一节，我们要重点掌握<strong>前端模块化的诞生意义</strong>、<strong>主流的模块化规范</strong>和<br><strong>ESM</strong> <strong>规范的优势</strong>。<br>由于前端构建工具的改革与底层模块化规范的发展息息相关，从一开始我就带你从头梳理了前端模块<br>化的演进史，从无模块化标准的时代开始谈起，跟你介绍了文件划分的模块化方案，并分析了这个方案<br>潜在的几个问题。随后又介绍了命名空间和IIFE两种方案，但这两种方式并没有解决模块自动加载的问<br>题。由此展开对前端模块化规范的介绍，我主要给你分析了三个主流的模块化标准:<br>CommonJS、AMD以 及 ES<br>Module，针对每个规范从模块化代码标准、模块自动加载方案这两个维度给你进行了详细的拆解，最后<br>得出 ES Module 即将成为主流前端模块化方案的结论。<br>本小节的内容就到这里了，希望能对你有所启发，也欢迎你把自己的学习心得打到评论区，我们下一<br>节再见~</p>
+</div><div class="article-tags size-small is-uppercase mb-4"><i class="fas fa-tags has-text-grey"></i> <a class="link-muted mr-2" rel="tag" href="/tags/%E5%89%8D%E7%AB%AF/">前端</a></div><div class="recommend-post"><span class="is-size-6 has-text-grey has-mr-7"># 推荐文章</span><br><span>  1.<a class="is-size-6" href="/posts/39441e6f/" target="_blank">响应式原理：Vue 3 的 nextTick ？</a><br></span><span>  2.<a class="is-size-6" href="/posts/91e84f90/" target="_blank">响应式原理：副作用函数探秘</a><br></span><span>  3.<a class="is-size-6" href="/posts/bf54f4c/" target="_blank">响应式原理：基于 Proxy 的响应式是什么样的？</a><br></span><span>  4.<a class="is-size-6" href="/posts/16c5c5d5/" target="_blank">渲染器：数组子节点的 diff 算法</a><br></span><span>  5.<a class="is-size-6" href="/posts/8d428288/" target="_blank">渲染器：组件是如何完成更新的？</a><br></span></div></article></div><div class="card"><div class="card-content"><h3 class="menu-label has-text-centered">喜欢这篇文章？打赏一下作者吧</h3><div class="buttons is-centered"><a class="button is-info donate"><span class="icon is-small"><i class="fab fa-alipay"></i></span><span>支付宝</span><span class="qrcode"><img src="https://cdn-us.imgs.moe/2023/05/26/646fb97e763cc.jpg" alt="支付宝"></span></a><a class="button is-success donate"><span class="icon is-small"><i class="fab fa-weixin"></i></span><span>微信</span><span class="qrcode"><img src="https://cdn-us.imgs.moe/2023/05/26/646fb97e763da.jpg" alt="微信"></span></a></div></div></div><nav class="post-navigation mt-4 level is-mobile"><div class="level-end"><a class="article-nav-next level level-item link-muted" href="/posts/e76f424e/"><span class="level-item">让 Vite 助力你的前端工程化之路</span><i class="level-item fas fa-chevron-right"></i></a></div></nav></div><div class="column column-left is-4-tablet is-4-desktop is-4-widescreen  order-1 is-sticky"><!--!--><div class="card widget"><div class="card-content"><nav class="level"><div class="level-item has-text-centered flex-shrink-1"><div><figure class="image is-128x128 mx-auto mb-2"><img class="is-rounded" src="https://p3-passport.byteimg.com/img/user-avatar/d8bc7351ac3c93b11cd3146be24a0cba~100x100.awebp" alt="爷ゝ本霸气っ"></figure><p class="title is-size-4 is-block line-height-inherit">爷ゝ本霸气っ</p><p class="is-size-6 is-block">我欲乘风去，昔年化龙归</p><p class="is-size-6 is-flex justify-content-center"><i class="fas fa-map-marker-alt mr-1"></i><span>鹏城</span></p></div></div></nav><nav class="level is-mobile"><div class="level-item has-text-centered is-marginless"><div><p class="heading">文章</p><a href="/archives"><p class="title">22</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">分类</p><a href="/categories"><p class="title">7</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">标签</p><a href="/tags"><p class="title">6</p></a></div></div></nav><hr><p id="hitokoto">:D 舔狗日记获取中...</p><script type="text/javascript" defer>
+                                // 获取舔狗日记
+                                const randomTianDogData = function (list) {
+                                    // 随机取出一个元素
+                                    const randomIndex = Math.floor(Math.random() * list.length); // 生成 0 到 list.length-1 之间的整数
+                                    return list[randomIndex]; // 根据随机下标获取数组中的元素
+                                }
+                                // 获取年月日
+                                const randomTianDogDate = function () {
+                                    // 获取 1970 年 1 月 1 日至今的毫秒数范围
+                                    const minTimestamp = new Date('2020-01-01').getTime();
+                                    const maxTimestamp = new Date().getTime();
+                        
+                                    // 生成指定范围内的随机日期
+                                    const randomTimestamp = Math.floor(Math.random() * (maxTimestamp - minTimestamp)) + minTimestamp;
+                                    const randomDate = new Date(randomTimestamp);
+                        
+                                    // 获取随机日期的年、月、日
+                                    const year = randomDate.getFullYear();
+                                    const month = randomDate.getMonth() + 1;
+                                    const day = randomDate.getDate();
+                        
+                                    return year + '-' + month + '-' + day // 输出随机的年月日
+                                }
+
+                                function getYiyan(){
+                                    $.when(
+                                      $.getJSON('http://111.230.213.88/mockData/weathers.json'),
+                                      $.getJSON('http://111.230.213.88/mockData/diaries.json')
+                                    ).done(function(data1, data2) {
+                                      // 在这里对两个接口的数据进行操作
+                                      $('#hitokoto').html("");
+                                      $('#hitokoto').append(
+                                        "<p>" + randomTianDogDate() + "</p><p>" + randomTianDogData(data1[0]) + "</p>" +
+                                        "<strong style='color: #3273dc;'>" + randomTianDogData(data2[0]) + "</strong>"
+                                      );  
+                                    }).fail(function() {
+                                      console.log('Error: 舔狗日记获取失败.');
+                                    });
+                                }
+                                $(function (){getYiyan();$('#hitokoto').click(function(){getYiyan();})});</script></div></div><!--!--><div class="card widget"><div class="card-content"><h3 class="menu-label">最新文章</h3><article class="media"><a class="media-left" href="/posts/658c93f2/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646fa77438c98.png" alt="模块标准：为什么 ESM 是前端模块化的未来？"></p></a><div class="media-content size-small"><p><time dateTime="2022-09-17T11:13:16.000Z">2022-09-17</time></p><p class="title is-6"><a class="link-muted" href="/posts/658c93f2/">模块标准：为什么 ESM 是前端模块化的未来？</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAVite/">深入浅出Vite</a></p></div></article><article class="media"><a class="media-left" href="/posts/e76f424e/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646fa4ee2fa1b.png" alt="让 Vite 助力你的前端工程化之路"></p></a><div class="media-content size-small"><p><time dateTime="2022-09-07T11:13:16.000Z">2022-09-07</time></p><p class="title is-6"><a class="link-muted" href="/posts/e76f424e/">让 Vite 助力你的前端工程化之路</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAVite/">深入浅出Vite</a></p></div></article><article class="media"><a class="media-left" href="/posts/39441e6f/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646f9fde778cf.png" alt="响应式原理：Vue 3 的 nextTick ？"></p></a><div class="media-content size-small"><p><time dateTime="2022-08-27T11:13:16.000Z">2022-08-27</time></p><p class="title is-6"><a class="link-muted" href="/posts/39441e6f/">响应式原理：Vue 3 的 nextTick ？</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/">深入Vue3原理</a></p></div></article><article class="media"><a class="media-left" href="/posts/91e84f90/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646f9fde38e7e.png" alt="响应式原理：副作用函数探秘"></p></a><div class="media-content size-small"><p><time dateTime="2022-08-17T11:13:16.000Z">2022-08-17</time></p><p class="title is-6"><a class="link-muted" href="/posts/91e84f90/">响应式原理：副作用函数探秘</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/">深入Vue3原理</a></p></div></article><article class="media"><a class="media-left" href="/posts/bf54f4c/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646f9dbdbc919.png" alt="响应式原理：基于 Proxy 的响应式是什么样的？"></p></a><div class="media-content size-small"><p><time dateTime="2022-08-07T11:13:16.000Z">2022-08-07</time></p><p class="title is-6"><a class="link-muted" href="/posts/bf54f4c/">响应式原理：基于 Proxy 的响应式是什么样的？</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/">深入Vue3原理</a></p></div></article></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">分类</h3><ul class="menu-list"><li><a class="level is-mobile is-marginless" href="/categories/%E5%89%8D%E7%AB%AF/"><span class="level-start"><span class="level-item">前端</span></span><span class="level-end"><span class="level-item tag">10</span></span></a><ul class="mr-0"><li><a class="level is-mobile is-marginless" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/"><span class="level-start"><span class="level-item">深入Vue3原理</span></span><span class="level-end"><span class="level-item tag">8</span></span></a></li><li><a class="level is-mobile is-marginless" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAVite/"><span class="level-start"><span class="level-item">深入浅出Vite</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li></ul></li><li><a class="level is-mobile is-marginless" href="/categories/%E5%B7%A5%E5%85%B7%E6%95%99%E7%A8%8B/"><span class="level-start"><span class="level-item">工具教程</span></span><span class="level-end"><span class="level-item tag">4</span></span></a><ul class="mr-0"><li><a class="level is-mobile is-marginless" href="/categories/%E5%B7%A5%E5%85%B7%E6%95%99%E7%A8%8B/%E4%B8%BB%E9%A2%98%E5%B7%A5%E5%85%B7/"><span class="level-start"><span class="level-item">主题工具</span></span><span class="level-end"><span class="level-item tag">4</span></span></a></li></ul></li><li><a class="level is-mobile is-marginless" href="/categories/%E6%96%87%E7%AB%A0%E5%8A%A0%E5%AF%86/"><span class="level-start"><span class="level-item">文章加密</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/categories/%E6%B3%95%E5%BE%8B/"><span class="level-start"><span class="level-item">法律</span></span><span class="level-end"><span class="level-item tag">7</span></span></a></li></ul></div></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">归档</h3><ul class="menu-list"><li><a class="level is-mobile is-marginless" href="/archives/2022/09/"><span class="level-start"><span class="level-item">九月 2022</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2022/08/"><span class="level-start"><span class="level-item">八月 2022</span></span><span class="level-end"><span class="level-item tag">3</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2022/07/"><span class="level-start"><span class="level-item">七月 2022</span></span><span class="level-end"><span class="level-item tag">3</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2022/06/"><span class="level-start"><span class="level-item">六月 2022</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2020/01/"><span class="level-start"><span class="level-item">一月 2020</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><a class="level is-mobile is-marginless" href="/archives/"><span class="level-start"><span class="level-item">查看全部&gt;&gt;</span></span></a></ul></div></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">标签</h3><div class="field is-grouped is-grouped-multiline"><div class="control"><a class="tags has-addons" href="/tags/%E5%89%8D%E7%AB%AF/"><span class="tag">前端</span><span class="tag is-grey-lightest">10</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E6%B3%95%E5%BE%8B/"><span class="tag">法律</span><span class="tag is-grey-lightest">7</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E5%B7%A5%E5%85%B7%E6%95%99%E7%A8%8B/"><span class="tag">工具教程</span><span class="tag is-grey-lightest">3</span></a></div><div class="control"><a class="tags has-addons" href="/tags/hexo%E4%B8%BB%E9%A2%98/"><span class="tag">hexo主题</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/icarus%E4%B8%BB%E9%A2%98%E9%85%8D%E7%BD%AE/"><span class="tag">icarus主题配置</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E5%8A%A0%E5%AF%86%E6%96%87%E7%AB%A0/"><span class="tag">加密文章</span><span class="tag is-grey-lightest">1</span></a></div></div></div></div></div><!--!--></div></div></div></section><footer class="footer"><div class="container"><div class="level"><div class="level-start"><a class="footer-logo is-block mb-2" href="/"><img src="https://s1.ax1x.com/2023/05/25/p9H4zND.png" alt="爷ゝ本霸气っ" height="28"></a><p class="size-small"><span>&copy; 2023 爷ゝ本霸气っ</span>  Powered by <a href="https://hexo.io/" target="_blank">Hexo</a> &amp; <a href="https://github.com/ppoffice/hexo-theme-icarus" target="_blank">Icarus</a>,Modify by <a href="https://github.com/Leon9916/hexo-blog" target="_blank">removeif</a> <br>© 版权2说明：[本网站所有内容均收集于互联网或自己创作,<br>    方便于自己学习交流，如有侵权，请<a href="mailto:2476288442@qq.com">联系</a>，立即处理]<br><script type="text/javascript" src="/js/statistics.js"></script><span id="statistic-times">网站运行时间统计加载中...</span></p></div><div class="level-end"></div></div></div></footer><script src="https://cdn.jsdelivr.net/npm/moment@2.22.2/min/moment-with-locales.min.js"></script><script>moment.locale("zh-CN");</script><script>var IcarusThemeSettings = {
+            site: {
+                url: 'https://removeif.github.io',
+                external_link: {"enable":true,"exclude":[]}
+            },
+            article: {
+                highlight: {
+                    clipboard: true,
+                    fold: 'unfolded'
+                }
+            }
+        };</script><script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.4/dist/clipboard.min.js" defer></script><script src="/js/animation.js"></script><a id="back-to-top" title="回到顶端" href="javascript:;"><i class="fas fa-chevron-up"></i></a><script src="/js/back-to-top.js" defer></script><!--!--><!--!--><script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/js/lightgallery.min.js" defer></script><script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js" defer></script><script src="/js/gallery.js" defer></script><!--!--><!--!--><!--!--><script src="/js/main.js" defer></script><script src="/js/comment-issue-data.js" defer></script><link rel="stylesheet" href="/css/insight.css"><div class="searchbox ins-search"><div class="searchbox-container ins-search-container"><div class="searchbox-input-wrapper"><input class="searchbox-input ins-search-input" type="text" placeholder="想要查找什么..."><span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span></div><div class="searchbox-result-wrapper ins-section-wrapper"><div class="ins-section-container"></div></div></div></div><script>(function (window) {
+            var INSIGHT_CONFIG = {
+                TRANSLATION: {
+                    POSTS: '文章',
+                    PAGES: '页面',
+                    CATEGORIES: '分类',
+                    TAGS: '标签',
+                    UNTITLED: '(无标题)',
+                },
+                CONTENT_URL: '/content.json',
+            };
+            window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+        })(window);</script><script src="/js/insight.js" defer></script></body></html>

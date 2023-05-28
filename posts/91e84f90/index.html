@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="generator" content="Hexo 4.2.1"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta><title>响应式原理：副作用函数探秘 - 爷ゝ本霸气っ</title><meta description="技术分享,前端开发,数据接口,算法"><meta property="og:type" content="blog"><meta property="og:title" content="爷ゝ本霸气っ"><meta property="og:url" content="https://removeif.github.io/"><meta property="og:site_name" content="爷ゝ本霸气っ"><meta property="og:description" content="技术分享,前端开发,数据接口,算法"><meta property="og:locale" content="zh_CN"><meta property="og:image" content="https://p3-passport.byteimg.com/img/user-avatar/d8bc7351ac3c93b11cd3146be24a0cba~100x100.awebp"><meta property="article:published_time" content="2022-08-17T11:13:16.000Z"><meta property="article:modified_time" content="2023-05-25T17:52:29.431Z"><meta property="article:author" content="removeif"><meta property="article:tag" content="categories-tool"><meta property="twitter:card" content="summary"><meta property="twitter:image" content="https://p3-passport.byteimg.com/img/user-avatar/d8bc7351ac3c93b11cd3146be24a0cba~100x100.awebp"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://removeif.github.io/"},"headline":"爷ゝ本霸气っ","image":[],"datePublished":"2022-08-17T11:13:16.000Z","dateModified":"2023-05-25T17:52:29.431Z","author":{"@type":"Person","name":"removeif"},"description":"技术分享,前端开发,数据接口,算法"}</script><link rel="alternative" href="/atom.xml" title="爷ゝ本霸气っ" type="application/atom+xml"><link rel="icon" href="https://p3-passport.byteimg.com/img/user-avatar/d8bc7351ac3c93b11cd3146be24a0cba~100x100.awebp"><link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.0/css/all.css"><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu:400,600|Source+Code+Pro"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@9.12.0/styles/atom-one-dark.css"><link rel="stylesheet" href="//fonts.googleapis.com/css?family=Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Microsoft YaHei:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&amp;amp;subset=latin,latin-ext"><style>body>.footer,body>.navbar,body>.section{opacity:1}</style><!--!--><!--!--><script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" defer></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/css/justifiedGallery.min.css"><!--!--><!--!--><script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script><link rel="stylesheet" href="/css/style.css"><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script><script src="/js/globalUtils.js"></script><link rel="stylesheet" href="/live2d/waifu.css"><script type="text/javascript" async src="/live2d/autoload.js"></script></head><body class="is-3-column has-navbar-fixed-top"><nav class="navbar navbar-main is-fixed-top"><div class="container"><div class="navbar-brand justify-content-center"><a class="navbar-item navbar-logo" href="/"><img src="https://s1.ax1x.com/2023/05/25/p9H4zND.png" alt="爷ゝ本霸气っ" height="28"></a></div><div class="navbar-menu"><div class="navbar-start"><a class="navbar-item" href="/">首页</a><a class="navbar-item" href="/categories">分类</a><a class="navbar-item" href="/media">影音</a><a class="navbar-item" href="/album">相册</a><a class="navbar-item" href="/about">关于</a><a class="navbar-item" href="/chat_brother">Chat哥</a></div><div class="navbar-end"><a class="navbar-item" target="_blank" rel="noopener" title="Download on GitHub" href="https://github.com/Leon9916/hexo-blog"><i class="fab fa-github"></i></a><a class="navbar-item is-hidden-tablet catalogue" title="目录" href="javascript:;"><i class="fas fa-list-ul"></i></a><a class="navbar-item search" title="搜索" href="javascript:;"><i class="fas fa-search"></i></a><a class="navbar-item" id="night-nav" title="Night Mode" href="javascript:;"><i class="fas fa-moon" id="night-icon"></i></a></div></div></div></nav><script type="text/javascript" src="/js/theme-setting.js"></script><section class="section"><div class="container"><div class="columns"><div class="column order-2 column-main is-8-tablet is-8-desktop is-9-widescreen"><div class="card"><div class="card-image"><span class="image is-7by3"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646f9fde38e7e.png" alt="响应式原理：副作用函数探秘"></span></div><article class="card-content article" role="article"><div class="article-meta size-small is-uppercase level is-mobile"><div class="level-left"><span class="level-item"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a><span> / </span><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/">深入Vue3原理</a></span><span class="level-item">25 分钟 读完 (大约 3727 个字)</span></div></div><h1 class="title is-3 is-size-4-mobile">响应式原理：副作用函数探秘</h1><div class="content"><blockquote>
+<p>我们说到了 [Reactive]{.mark} 会在 [proxy<br>getter]{.mark} 的时候收集 [effect]{.mark} 依赖，在 [proxy<br>setter]{.mark} 的时候触发 [effect]{.mark} 的执行。那么 [effect]{.mark} 副作用函数到底是个什么？以及是如何被收集起来的呢？</p>
+</blockquote>
+<a id="more"></a>
+
+<p><strong>前言</strong></p>
+<p>我们说到了 [Reactive]{.mark} 会在 [proxy<br>getter]{.mark} 的时候收集 [effect]{.mark} 依赖，在 [proxy<br>setter]{.mark} 的时候触发 [effect]{.mark} 的执行。那么 [effect]{.mark} 副作用函数到底是个什么？以及是如何被收集起来的呢？</p>
+<p><strong>effect</strong></p>
+<p>找到源码中关于 [effect]{.mark} 部分的定义：</p>
+<p>export function effect (fn, options) {</p>
+<p>// 如果 fn 已经是一个 effect 函数了，则指向原始函数</p>
+<p>if (fn.effect) {</p>
+<p>fn = fn.effect.fn</p>
+<p>}</p>
+<p>// 构造 _effect 实例</p>
+<p>const _effect = new ReactiveEffect(fn)</p>
+<p>// options 初始化</p>
+<p>if (options) {</p>
+<p>extend(_effect, options)</p>
+<p>if (options.scope) recordEffectScope(_effect, options.scope)</p>
+<p>}</p>
+<p>// 如有 options 或者 不是懒加载，执行 _effect.run()</p>
+<p>if (!options || !options.lazy) {</p>
+<p>_effect.run()</p>
+<p>}</p>
+<p>// 返回 _effect.run</p>
+<p>const runner = _effect.run.bind(_effect)</p>
+<p>runner.effect = _effect</p>
+<p>return runner</p>
+<p>}</p>
+<p>这个 [effect]{.mark} 函数内部核心是通过 [ReactiveEffect]{.mark} 类创建了一个 [_effect]{.mark} 实例，从代码来看，[_effect]{.mark} 上包含了一个 [run]{.mark} 函数。默认 [effect]{.mark} 是没有传入 [options]{.mark} 参数的，所以这里直接执行了 [_effect.run()]{.mark}。我们知道，[fn]{.mark} 函数是在 [effect]{.mark} 函数中的一个入参，比如：</p>
+<p>const state = reactive({a: 1})</p>
+<p>effect(() =&gt; console.log(state.a))</p>
+<p>根据上一小节，我们知道因为这里我们访问了 [state.a]{.mark} 所以收集了副作用函数，但是需要知道的是这里的 [effect]{.mark} 传入的是一个 [fn]{.mark}，所以要想访问 [state.a]{.mark} 那这个 [fn]{.mark} 必须要执行才可以。那是在哪里执行的呢？接下来看一下 [ReactiveEffect]{.mark} 的实现：</p>
+<p>// 用于记录位于响应上下文中的effect嵌套层次数</p>
+<p>let effectTrackDepth = 0</p>
+<p>// 二进制位，每一位用于标识当前effect嵌套层级的依赖收集的启用状态</p>
+<p>export left trackOpBit = 1</p>
+<p>// 表示最大标记的位数</p>
+<p>const maxMarkerBits = 30</p>
+<p>// 当前活跃的 effect</p>
+<p>let activeEffect;</p>
+<p>export class ReactiveEffect {</p>
+<p>// 用于标识副作用函数是否位于响应式上下文中被执行</p>
+<p>active = true</p>
+<p>// 副作用函数持有它所在的所有依赖集合的引用，用于从这些依赖集合删除自身</p>
+<p>deps = []</p>
+<p>// 指针为，用于嵌套 effect 执行后动态切换 activeEffect</p>
+<p>parent = undefined</p>
+<p>// ...</p>
+<p>run() {</p>
+<p>// 若当前 ReactiveEffect 对象脱离响应式上下文</p>
+<p>// 那么其对应的副作用函数被执行时不会再收集依赖</p>
+<p>if (!this.active) {</p>
+<p>return this.fn()</p>
+<p>}</p>
+<p>// 缓存是否需要收集依赖</p>
+<p>let lastShouldTrack = shouldTrack</p>
+<p>try {</p>
+<p>// 保存上一个 activeEffect 到当前的 parent 上</p>
+<p>this.parent = activeEffect</p>
+<p>// activeEffect 指向当前的 effect</p>
+<p>activeEffect = this</p>
+<p>// shouldTrack 置成 true</p>
+<p>shouldTrack = true</p>
+<p>// 左移操作符 &lt;&lt; 将第一个操作数向左移动指定位数</p>
+<p>// 左边超出的位数将会被清除，右边将会补零。</p>
+<p>// trackOpBit 是基于 1 左移 effectTrackDepth 位</p>
+<p>trackOpBit = 1 &lt;&lt; ++effectTrackDepth</p>
+<p>// 如果未超过最大嵌套层数，则执行 initDepMarkers</p>
+<p>if (effectTrackDepth &lt;= maxMarkerBits) {</p>
+<p>initDepMarkers(this)</p>
+<p>} else {</p>
+<p>cleanupEffect(this)</p>
+<p>}</p>
+<p>// 这里执行了 fn</p>
+<p>return this.fn()</p>
+<p>} finally {</p>
+<p>if (effectTrackDepth &lt;= maxMarkerBits) {</p>
+<p>// 用于对曾经跟踪过，但本次副作用函数执行时没有跟踪的依赖采取删除操作。</p>
+<p>// 新跟踪的 和 本轮跟踪过的都会被保留</p>
+<p>finalizeDepMarkers(this)</p>
+<p>}</p>
+<p>// &lt;&lt; --effectTrackDepth 右移动 effectTrackDepth 位</p>
+<p>trackOpBit = 1 &lt;&lt; --effectTrackDepth</p>
+<p>// 返回上个 activeEffect</p>
+<p>activeEffect = this.parent</p>
+<p>// 返回上个 shouldTrack</p>
+<p>shouldTrack = lastShouldTrack</p>
+<p>// 情况本次的 parent 指向</p>
+<p>this.parent = undefined</p>
+<p>}</p>
+<p>}</p>
+<p>}</p>
+<p>大致看一眼，我们可以看到在 [ReactiveEffect]{.mark} 中是执行了 [this.fn()]{.mark} 的，这也就解释了 [effect]{.mark} 中的回调函数 [fn]{.mark} 是在这里被调用的。接下来详细研究一下这个 [ReactiveEffect]{.mark}。</p>
+<p>但这段代码看起来不是很长，但涉及了好几个概念，我们来一个个看。</p>
+<p><strong>1. parent 的作用</strong></p>
+<p>为什么 [ReactiveEffect]{.mark} 要设计一个 [parent]{.mark} 这样一个看似没啥用的变量指针来存储上一次的 [activeEffect]{.mark} 呢？如果改成下面这样不是更简单吗？</p>
+<p>run() {</p>
+<p>if (!this.active) {</p>
+<p>return this.fn();</p>
+<p>}</p>
+<p>// 初始化</p>
+<p>shouldTrack = true;</p>
+<p>activeEffect = this;</p>
+<p>const result = this.fn();</p>
+<p>// 重置</p>
+<p>shouldTrack = false;</p>
+<p>return result;</p>
+<p>}</p>
+<p>其实对于下面这样的代码：</p>
+<p>const state = reactive({a: 1})</p>
+<p>effect(() =&gt; console.log(state.a))</p>
+<p>state.a++</p>
+<p>[effect]{.mark} 函数内调用 [ReactiveEffect]{.mark} 实例的 [run]{.mark} 函数。[run]{.mark} 函数执行的时候，把 [activeEffect]{.mark} 指向 [this]{.mark}。然后执行 [effect]{.mark} 传入的 [fn]{.mark} 函数，函数在执行的时候访问了 [state.a]{.mark} 触发了 [getter]{.mark} 钩子。回顾一下上一节的内容，[getter]{.mark} 的时候有触发添加 [activeEffect]{.mark} 的功能：</p>
+<p>// 把 activeEffect 添加到 dep 中</p>
+<p>dep.add(activeEffect!)</p>
+<p>而 [activeEffect]{.mark} 正是这里的 [this]{.mark}。当执行 [state.a++]{.mark} 时，访问了[state.a]{.mark} 的 [setter]{.mark}。上一节也说了，[setter]{.mark} 的执行会调用 [effect.run]{.mark} 函数：</p>
+<p>// triggerEffects</p>
+<p>effect.run();</p>
+<p>所以又会执行 [fn]{.mark}。</p>
+<p>到这里看似很完美，那么我们再来看另外一个例子🌰：</p>
+<p>const state = reactive({</p>
+<p>a: 1,</p>
+<p>b: 2</p>
+<p>});</p>
+<p>// ef1</p>
+<p>effect(() =&gt; {</p>
+<p>// ef2</p>
+<p>effect(() =&gt; console.log(`b: ${state.b}`))</p>
+<p>console.log(`a: ${state.a}`)</p>
+<p>});</p>
+<p>state.a ++</p>
+<p>按照上面的逻辑，在第一次 [effect]{.mark} 执行的时候，[activeEffect =<br>ef1]{.mark} 然后再执行内部的 [effect]{.mark}， 此时 [activeEffect =<br>ef2]{.mark} 然后 [ef2]{.mark} 执行完成回到 [ef1]{.mark} 函数体内，此时再访问 [state.a]{.mark} 触发对 [a]{.mark} 的依赖收集，但收集到的却是 [ef2]{.mark}。那么最终打印的是：</p>
+<p>b: 2</p>
+<p>a: 1</p>
+<p>b: 2</p>
+<p>很明显不符合我们的要求，我们期望的是输出：</p>
+<p>b: 2</p>
+<p>a: 1</p>
+<p>b: 2</p>
+<p>a: 2</p>
+<p>这时候 [parent]{.mark} 就排上用场了，当为 [effect]{.mark} 加上 [parent]{.mark} 属性后，我们再来捋一下整体的流程。</p>
+<p>执行 </p>
+<p>ef1 的时候，</p>
+<p>activeEffect 指向 </p>
+<p>ef1，此时 </p>
+<p>parent 是 </p>
+<p>undefined。</p>
+<p>执行 </p>
+<p>ef1 fn 遇到了 </p>
+<p>ef2，调用 </p>
+<p>ef2 此时 </p>
+<p>ef2 的 </p>
+<p>parent 指向 </p>
+<p>ef1， </p>
+<p>activeEffect 指向 </p>
+<p>ef2。然后执行 </p>
+<p>ef2 的 fn。</p>
+<p>ef2 的 fn 执行的时候，访问了 </p>
+<p>state.b 依赖收集 </p>
+<p>ef2。执行完成后，</p>
+<p>activeEffect = this.parent 又把 </p>
+<p>activeEffect 指向了 </p>
+<p>ef1。</p>
+<p>返回 </p>
+<p>ef1 的 </p>
+<p>fn 体继续执行，此时访问 </p>
+<p>state.a 依赖收集 </p>
+<p>activeEffect 为 </p>
+<p>ef1。</p>
+<p>触发 </p>
+<p>state.a 的 </p>
+<p>setter，调用 </p>
+<p>a 的副作用 </p>
+<p>ef1，依次打印……</p>
+<p>到这里相信各位小伙伴已经清楚了 [parent]{.mark} 的作用了，那就是<strong>通过 [parent]{.mark} 这个标记，来回切换 [activeEffect]{.mark} 的指向，从而完成对嵌套 [effect]{.mark} 的正确的依赖收集</strong>。</p>
+<p><strong>2. 依赖清理</strong></p>
+<p>在说依赖清理之前，再来看一个有意思的例子：</p>
+<p>const state = reactive({</p>
+<p>a: 1,</p>
+<p>show: true</p>
+<p>});</p>
+<p>effect(() =&gt; {</p>
+<p>if (state.show) {</p>
+<p>console.log(`a: ${state.a}`)</p>
+<p>}</p>
+<p>});</p>
+<p>state.a ++</p>
+<p>setTimeout(() =&gt; {</p>
+<p>state.show = false</p>
+<p>state.a ++</p>
+<p>}, 1000)</p>
+<p>上面的例子中，我们在 [effect]{.mark} 中完成了对 [show]{.mark} 和 [a]{.mark} 的依赖收集，然后 [1s]{.mark} 后，我们改变了 [show]{.mark} 的状态为 [false]{.mark}。此时 [effect]{.mark} 内的函数中的 [console.log]{.mark} 将永远不会执行，然后再触发 [state.a++]{.mark} 的动作，访问 [a]{.mark} 的 [getter]{.mark}，如果没有依赖清理，那么按照之前的做法，测试也会触发 [effect.fn]{.mark} 的执行，但这个执行其实没意义的，因为 [a]{.mark} 已经没有被使用了，是一个永远不会被访问到的变量，造成了性能浪费。所以我们需要删除 [a]{.mark} 的副作用函数，让它不要执行。</p>
+<p>接下来一起来看看 [Vue]{.mark} 是怎么做的吧！这里涉及到的内容有点多，我们先一个个解释，首先补习一下关于 [js]{.mark} 的一些操作符的基础知识。</p>
+<p><strong>1. 左移（&lt;&lt;）</strong></p>
+<p>左移操作符 ([&lt;&lt;]{.mark}) 将第一个操作数转换成 2<br>进制后向左移动指定位数，左边超出的位数将会被清除，右边将会补零。</p>
+<p>const a = 1; // 00000000000000000000000000000001</p>
+<p>const b = 1;</p>
+<p>console.log(a &lt;&lt; b); // 00000000000000000000000000000010</p>
+<p>// expected output: 2</p>
+<p><strong>2. 位或操作（|）</strong></p>
+<p>位或操作符（|）， 如果两位之一为 1，则设置每位为 1。</p>
+<p>const a = 5; // 00000000000000000000000000000101</p>
+<p>const b = 3; // 00000000000000000000000000000011</p>
+<p>console.log(a | b); // 00000000000000000000000000000111</p>
+<p>// expected output: 7</p>
+<p><strong>3. 按位与（&amp;）</strong></p>
+<p>按位与运算符 ([&amp;]{.mark})<br>在两个操作数对应的二进位都为 [1]{.mark} 时，该位的结果值才为 [1]{.mark}，否则为 [0]{.mark}。</p>
+<p>const a = 5; // 00000000000000000000000000000101</p>
+<p>const b = 3; // 00000000000000000000000000000011</p>
+<p>console.log(a &amp; b); // 00000000000000000000000000000001</p>
+<p>// expected output: 1</p>
+<p><strong>4. 按位非（~）</strong></p>
+<p>按位非运算符（~），反转操作数的位。</p>
+<p>const a = 5; // 00000000000000000000000000000101</p>
+<p>const b = -3; // 11111111111111111111111111111101</p>
+<p>console.log(~a); // 11111111111111111111111111111010</p>
+<p>// expected output: -6</p>
+<p>console.log(~b); // 00000000000000000000000000000010</p>
+<p>// expected output: 2</p>
+<p>有了这些基础的知识点后，再来认识几个变量。</p>
+<p><strong>1. effectTrackDepth</strong></p>
+<p>用于记录位于响应上下文中的 [effect]{.mark} 嵌套层次数，默认值为 [0]{.mark}。</p>
+<p>// effectTrackDepth = 0</p>
+<p>effect(() =&gt; {</p>
+<p>// effectTrackDepth = 1</p>
+<p>effect(() =&gt; {})</p>
+<p>})</p>
+<p><strong>2. trackOpBit</strong></p>
+<p>二进制位，每一位用于标识当前 [effect]{.mark} 嵌套层级的依赖收集的启用状态。默认值为 [1]{.mark}，即 [00000000000000000000000000000001]{.mark}。</p>
+<p><strong>3. maxMarkerBits</strong></p>
+<p>表示最大的 [effect]{.mark} 嵌套的层次数，最大值为 [30]{.mark}。</p>
+<p>好了，搞懂了这些操作符之后，我们来看看 [Vue]{.mark} 的依赖清理是如何实现的，先来看不超过 [maxMarkerBits]{.mark} 层级数的嵌套 [effect]{.mark} 的依赖收集的过程，还以上面那个 [demo]{.mark} 作为示例：</p>
+<p>const state = reactive({</p>
+<p>a: 1,</p>
+<p>show: true</p>
+<p>});</p>
+<p>effect(() =&gt; {</p>
+<p>if (state.show) {</p>
+<p>console.log(`a: ${state.a}`)</p>
+<p>}</p>
+<p>});</p>
+<p>state.a ++</p>
+<p>setTimeout(() =&gt; {</p>
+<p>state.show = false</p>
+<p>state.a ++</p>
+<p>}, 1000)</p>
+<p><strong>Step 1</strong>：[run]{.mark} 函数执行的时候，[trackOpBit = 1 &lt;&lt;<br>++effectTrackDepth]{.mark} 这个语句执行完成后，得到 [effectTrackDepth =<br>1]{.mark}；[trackOpBit.toString(2) =<br>00000000000000000000000000000010]{.mark}。</p>
+<p><strong>Step 2</strong>：因为 [effectTrackDepth &lt;<br>maxMarkerBits]{.mark} ，所以执行 [initDepMarkers]{.mark} 函数，因为这里的 [deps]{.mark} 在初始化的时候还是个空数组，所以此函数未执行。</p>
+<p>export const initDepMarkers = ({ deps }) =&gt; {</p>
+<p>if (deps.length) {</p>
+<p>for (let i = 0; i &lt; deps.length; i++) {</p>
+<p>deps[i].w |= trackOpBit // set was tracked</p>
+<p>}</p>
+<p>}</p>
+<p>}</p>
+<p><strong>Step<br>3</strong>：执行 [this.fn]{.mark} 函数，先访问 [state.show]{.mark}，触发了 [trackEffects]{.mark}。</p>
+<p>export function trackEffects(dep) {</p>
+<p>let shouldTrack = false</p>
+<p>if (effectTrackDepth &lt;= maxMarkerBits) {</p>
+<p>// 如果本轮副作用函数执行过程中已经访问并收集过，则不用再收集该依赖</p>
+<p>if (!newTracked(dep)) {</p>
+<p>// 设置 dep.n</p>
+<p>dep.n |= trackOpBit</p>
+<p>shouldTrack = !wasTracked(dep)</p>
+<p>}</p>
+<p>} else {</p>
+<p>// Full cleanup mode.</p>
+<p>shouldTrack = !dep.has(activeEffect!)</p>
+<p>}</p>
+<p>if (shouldTrack) {</p>
+<p>dep.add(activeEffect!)</p>
+<p>activeEffect!.deps.push(dep)</p>
+<p>}</p>
+<p>}</p>
+<p>这里需要额外了解 2<br>个函数：[wasTracked]{.mark}（已经被收集过，缩写是 [w]{.mark}）<br>和 [newTracked]{.mark}（新收集的依赖，缩写是 [n]{.mark}）。</p>
+<p>export const wasTracked = dep =&gt; (dep.w &amp; trackOpBit) &gt; 0</p>
+<p>export const newTracked = dep =&gt; (dep.n &amp; trackOpBit) &gt; 0</p>
+<p>进入 [trackEffects]{.mark} 时，因为此时还没有为 [dep.n]{.mark} 进行或运算赋值，所以 [state.show]{.mark} 的 [newTracked<br>= false]{.mark}，[wasTracked = false]{.mark}。</p>
+<p>所以计算得到 [shouldTrack =<br>true]{.mark}，最后将 [activeEffect]{.mark} 收集进入 [dep]{.mark} 中，同时执行了 [activeEffect.deps.push(dep)]{.mark} 将 [dep]{.mark} 存入了 [activeEffect]{.mark} 的 [deps]{.mark} 中。然后访问 [state.a]{.mark} 重复上述操作。上述步骤执行完成后的 [activeEffect.deps]{.mark} 如下：</p>
+<p>[</p>
+<p>{&quot;w&quot;:0,&quot;n&quot;: 00000000000000000000000000000010, [effect]},</p>
+<p>{&quot;w&quot;:0,&quot;n&quot;: 00000000000000000000000000000010, [effect]}</p>
+<p>]</p>
+<p><strong>Step 4</strong>：最后执行 [finalizeDepMarkers]{.mark} 函数，根据第 3<br>步，此时 [effect]{.mark} 中的 [deps]{.mark} 包含了 2<br>个 [dep]{.mark}，分别是 [state.show]{.mark} 和 [state.a]{.mark}。 [finalizeDepMarkers]{.mark} 函数内部执行了 [wasTracked]{.mark}（已经被收集过，缩写是 [w]{.mark}）<br>和 [newTracked]{.mark}（新收集的依赖，缩写是 [n]{.mark}）<br>函数，因为 [dep.w = 0]{.mark} 所以 [wasTracked = false]{.mark}。</p>
+<p>export const finalizeDepMarkers = (effect: ReactiveEffect) =&gt;<br>{</p>
+<p>const { deps } = effect</p>
+<p>if (deps.length) {</p>
+<p>let ptr = 0</p>
+<p>for (let i = 0; i &lt; deps.length; i++) {</p>
+<p>const dep = deps[i]</p>
+<p>if (wasTracked(dep) &amp;&amp; !newTracked(dep)) {</p>
+<p>dep.delete(effect)</p>
+<p>} else {</p>
+<p>// 缩小依赖集合的大小</p>
+<p>deps[ptr++] = dep</p>
+<p>}</p>
+<p>// clear bits</p>
+<p>dep.w &amp;= ~trackOpBit</p>
+<p>dep.n &amp;= ~trackOpBit</p>
+<p>}</p>
+<p>deps.length = ptr</p>
+<p>}</p>
+<p>}</p>
+<p>因为 [wasTracked =<br>false]{.mark}，因此 [finalizeDepMarkers]{.mark} 处理后仍然将副作用函数保留在这两个属性对应的依赖集合中，同时把 [dep.w]{.mark} 和 [dep.n]{.mark} 重置回<br>0。</p>
+<p>[{&quot;w&quot;:0, &quot;n&quot;:0, [effect]},{&quot;w&quot;:0, &quot;n&quot;:0,<br>[effect]}]</p>
+<p><strong>Step 5</strong>：当执行 [state.show =<br>false]{.mark} 的时候，触发 [effect.run]{.mark} 的执行，此时执行 [initDepMarkers]{.mark} 时，因为已经存在了 [dep]{.mark}，所以先访问 [state.show]{.mark}。</p>
+<p>当执行到 [trackEffects]{.mark} 时，此时的 [newTracked =<br>false]{.mark}，执行逻辑和之前一致。只不过因为 [state.show =<br>false]{.mark}，所以没有触发 [state.a]{.mark} 的这一部分逻辑的处理，最后得到的结果为：</p>
+<p>[</p>
+<p>{</p>
+<p>&quot;w&quot;: 00000000000000000000000000000010,</p>
+<p>&quot;n&quot;: 00000000000000000000000000000010,</p>
+<p>[effect]</p>
+<p>},</p>
+<p>{</p>
+<p>&quot;w&quot;: 00000000000000000000000000000010,</p>
+<p>&quot;n&quot;: 0,</p>
+<p>[effect]</p>
+<p>}</p>
+<p>]</p>
+<p><strong>Step 6</strong>：最后执行 [finalizeDepMarkers]{.mark} 时，如下。</p>
+<p>if (wasTracked(dep) &amp;&amp; !newTracked(dep)) {</p>
+<p>dep.delete(effect)</p>
+<p>}</p>
+<p>因为这里的 [state.a]{.mark} 的 [wasTracked =<br>true]{.mark} 且 [newTracked]{.mark} 为 [false]{.mark}，所以执行了 [dep.delete(effect)]{.mark} 将 [effect]{.mark} 从 [dep]{.mark} 中踢掉。</p>
+<p><strong>Step<br>7</strong>：[1s]{.mark} 后执行 [state.a++]{.mark} 的操作，由于 [state.a]{.mark} 中没有 [effect]{.mark} 了，所以不会执行副作用函数。</p>
+<p><strong>总结</strong>： [Vue]{.mark} 在组件的 [effect]{.mark} 执行之前，会根据 [dep]{.mark} 的收集标记位 [w]{.mark} 和 [n]{.mark} 来进行清理依赖，删除之前 [state.a]{.mark} 收集的 [effect]{.mark} 依赖。这样当我们修改 [state.a]{.mark} 时，由于已经没有依赖了，就不会触发 [effect]{.mark} 重新执行。</p>
+<p>另外，为了更容易帮助小伙伴们理解上述的流程，我也精心制作了一个动画演示上述流程和过程：</p>
+<p><img src="https://cdn-us.imgs.moe/2023/05/26/646f9fde38e7e.png" alt="截图.png"></p>
+<p>注意，当 [effectTrackDepth]{.mark} 大于 [30]{.mark} 时，会调用 [cleanup]{.mark} 来清理依赖，其实 [cleanup]{.mark} 的原理就是依赖收集前全部删除所有的 [dep]{.mark}，依赖收集时再一个个加进来，这个性能其实是比较差的，所以 [Vue<br>3.2]{.mark} 改成了通过二进制标记位的方式来选择性删除和添加，提升了性能。关于这部分更多的细节，可以参考[这个PR]{.mark}。</p>
+<p><strong>总结</strong></p>
+<p>到这里，我们基本上讲完了 [Vue<br>3]{.mark} 的响应式原理基础，如果有小伙伴了解 [Vue<br>2]{.mark} 的响应式原理，应该清楚 [Vue2]{.mark} 的响应式原理可以理解成如下一幅图：</p>
+<p><img src="https://cdn-us.imgs.moe/2023/05/26/646f9fde76b9c.png" alt="截图.png"></p>
+<p>在 [Vue<br>2]{.mark} 中，[Watcher]{.mark} 就是依赖，有专门针对组件渲染的 [render<br>watcher]{.mark}。</p>
+<p>依赖收集：组件在 </p>
+<p>render 的时候会访问模板中的数据，触发 </p>
+<p>getter 把 </p>
+<p>watcher 作为依赖收集。</p>
+<p>触发渲染：当修改数据时，会触发 </p>
+<p>setter，通知 </p>
+<p>watcher 更新，进而触发了组件的重新渲染。</p>
+<p>相应地，在 [Vue 3]{.mark} 中的响应式流程如下：</p>
+<p><img src="https://cdn-us.imgs.moe/2023/05/26/646f9fde778cf.png" alt="截图.png"></p>
+<p>可以看到，[Vue 3]{.mark} 相对于 [Vue<br>2]{.mark} 的响应式差别不大，主要就是劫持数据的方式改成用 [Proxy]{.mark} 实现，以及收集的依赖由 [watcher]{.mark} 实例变成了组件副作用函数 [effect]{.mark}。另外，值得一提的是 [Vue<br>3]{.mark} 在响应式设计上又多考虑了层级嵌套的依赖收集问题和不必要的依赖清理问题。</p>
+</div><div class="article-tags size-small is-uppercase mb-4"><i class="fas fa-tags has-text-grey"></i> <a class="link-muted mr-2" rel="tag" href="/tags/%E5%89%8D%E7%AB%AF/">前端</a></div><div class="recommend-post"><span class="is-size-6 has-text-grey has-mr-7"># 推荐文章</span><br><span>  1.<a class="is-size-6" href="/posts/39441e6f/" target="_blank">响应式原理：Vue 3 的 nextTick ？</a><br></span><span>  2.<a class="is-size-6" href="/posts/91e84f90/" target="_blank">响应式原理：副作用函数探秘</a><br></span><span>  3.<a class="is-size-6" href="/posts/bf54f4c/" target="_blank">响应式原理：基于 Proxy 的响应式是什么样的？</a><br></span><span>  4.<a class="is-size-6" href="/posts/16c5c5d5/" target="_blank">渲染器：数组子节点的 diff 算法</a><br></span><span>  5.<a class="is-size-6" href="/posts/8d428288/" target="_blank">渲染器：组件是如何完成更新的？</a><br></span></div></article></div><div class="card"><div class="card-content"><h3 class="menu-label has-text-centered">喜欢这篇文章？打赏一下作者吧</h3><div class="buttons is-centered"><a class="button is-info donate"><span class="icon is-small"><i class="fab fa-alipay"></i></span><span>支付宝</span><span class="qrcode"><img src="https://cdn-us.imgs.moe/2023/05/26/646fb97e763cc.jpg" alt="支付宝"></span></a><a class="button is-success donate"><span class="icon is-small"><i class="fab fa-weixin"></i></span><span>微信</span><span class="qrcode"><img src="https://cdn-us.imgs.moe/2023/05/26/646fb97e763da.jpg" alt="微信"></span></a></div></div></div><nav class="post-navigation mt-4 level is-mobile"><div class="level-start"><a class="article-nav-prev level level-item link-muted" href="/posts/39441e6f/"><i class="level-item fas fa-chevron-left"></i><span class="level-item">响应式原理：Vue 3 的 nextTick ？</span></a></div><div class="level-end"><a class="article-nav-next level level-item link-muted" href="/posts/bf54f4c/"><span class="level-item">响应式原理：基于 Proxy 的响应式是什么样的？</span><i class="level-item fas fa-chevron-right"></i></a></div></nav></div><div class="column column-left is-4-tablet is-4-desktop is-4-widescreen  order-1 is-sticky"><!--!--><div class="card widget"><div class="card-content"><nav class="level"><div class="level-item has-text-centered flex-shrink-1"><div><figure class="image is-128x128 mx-auto mb-2"><img class="is-rounded" src="https://p3-passport.byteimg.com/img/user-avatar/d8bc7351ac3c93b11cd3146be24a0cba~100x100.awebp" alt="爷ゝ本霸气っ"></figure><p class="title is-size-4 is-block line-height-inherit">爷ゝ本霸气っ</p><p class="is-size-6 is-block">我欲乘风去，昔年化龙归</p><p class="is-size-6 is-flex justify-content-center"><i class="fas fa-map-marker-alt mr-1"></i><span>鹏城</span></p></div></div></nav><nav class="level is-mobile"><div class="level-item has-text-centered is-marginless"><div><p class="heading">文章</p><a href="/archives"><p class="title">22</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">分类</p><a href="/categories"><p class="title">7</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">标签</p><a href="/tags"><p class="title">6</p></a></div></div></nav><hr><p id="hitokoto">:D 舔狗日记获取中...</p><script type="text/javascript" defer>
+                                // 获取舔狗日记
+                                const randomTianDogData = function (list) {
+                                    // 随机取出一个元素
+                                    const randomIndex = Math.floor(Math.random() * list.length); // 生成 0 到 list.length-1 之间的整数
+                                    return list[randomIndex]; // 根据随机下标获取数组中的元素
+                                }
+                                // 获取年月日
+                                const randomTianDogDate = function () {
+                                    // 获取 1970 年 1 月 1 日至今的毫秒数范围
+                                    const minTimestamp = new Date('2020-01-01').getTime();
+                                    const maxTimestamp = new Date().getTime();
+                        
+                                    // 生成指定范围内的随机日期
+                                    const randomTimestamp = Math.floor(Math.random() * (maxTimestamp - minTimestamp)) + minTimestamp;
+                                    const randomDate = new Date(randomTimestamp);
+                        
+                                    // 获取随机日期的年、月、日
+                                    const year = randomDate.getFullYear();
+                                    const month = randomDate.getMonth() + 1;
+                                    const day = randomDate.getDate();
+                        
+                                    return year + '-' + month + '-' + day // 输出随机的年月日
+                                }
+
+                                function getYiyan(){
+                                    $.when(
+                                      $.getJSON('http://111.230.213.88/mockData/weathers.json'),
+                                      $.getJSON('http://111.230.213.88/mockData/diaries.json')
+                                    ).done(function(data1, data2) {
+                                      // 在这里对两个接口的数据进行操作
+                                      $('#hitokoto').html("");
+                                      $('#hitokoto').append(
+                                        "<p>" + randomTianDogDate() + "</p><p>" + randomTianDogData(data1[0]) + "</p>" +
+                                        "<strong style='color: #3273dc;'>" + randomTianDogData(data2[0]) + "</strong>"
+                                      );  
+                                    }).fail(function() {
+                                      console.log('Error: 舔狗日记获取失败.');
+                                    });
+                                }
+                                $(function (){getYiyan();$('#hitokoto').click(function(){getYiyan();})});</script></div></div><!--!--><div class="card widget"><div class="card-content"><h3 class="menu-label">最新文章</h3><article class="media"><a class="media-left" href="/posts/658c93f2/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646fa77438c98.png" alt="模块标准：为什么 ESM 是前端模块化的未来？"></p></a><div class="media-content size-small"><p><time dateTime="2022-09-17T11:13:16.000Z">2022-09-17</time></p><p class="title is-6"><a class="link-muted" href="/posts/658c93f2/">模块标准：为什么 ESM 是前端模块化的未来？</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAVite/">深入浅出Vite</a></p></div></article><article class="media"><a class="media-left" href="/posts/e76f424e/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646fa4ee2fa1b.png" alt="让 Vite 助力你的前端工程化之路"></p></a><div class="media-content size-small"><p><time dateTime="2022-09-07T11:13:16.000Z">2022-09-07</time></p><p class="title is-6"><a class="link-muted" href="/posts/e76f424e/">让 Vite 助力你的前端工程化之路</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAVite/">深入浅出Vite</a></p></div></article><article class="media"><a class="media-left" href="/posts/39441e6f/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646f9fde778cf.png" alt="响应式原理：Vue 3 的 nextTick ？"></p></a><div class="media-content size-small"><p><time dateTime="2022-08-27T11:13:16.000Z">2022-08-27</time></p><p class="title is-6"><a class="link-muted" href="/posts/39441e6f/">响应式原理：Vue 3 的 nextTick ？</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/">深入Vue3原理</a></p></div></article><article class="media"><a class="media-left" href="/posts/91e84f90/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646f9fde38e7e.png" alt="响应式原理：副作用函数探秘"></p></a><div class="media-content size-small"><p><time dateTime="2022-08-17T11:13:16.000Z">2022-08-17</time></p><p class="title is-6"><a class="link-muted" href="/posts/91e84f90/">响应式原理：副作用函数探秘</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/">深入Vue3原理</a></p></div></article><article class="media"><a class="media-left" href="/posts/bf54f4c/"><p class="image is-64x64"><img class="thumbnail" src="https://cdn-us.imgs.moe/2023/05/26/646f9dbdbc919.png" alt="响应式原理：基于 Proxy 的响应式是什么样的？"></p></a><div class="media-content size-small"><p><time dateTime="2022-08-07T11:13:16.000Z">2022-08-07</time></p><p class="title is-6"><a class="link-muted" href="/posts/bf54f4c/">响应式原理：基于 Proxy 的响应式是什么样的？</a></p><p class="is-uppercase"><i class="fas fa-folder-open has-text-grey"> </i><a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a> / <a class="link-muted" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/">深入Vue3原理</a></p></div></article></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">分类</h3><ul class="menu-list"><li><a class="level is-mobile is-marginless" href="/categories/%E5%89%8D%E7%AB%AF/"><span class="level-start"><span class="level-item">前端</span></span><span class="level-end"><span class="level-item tag">10</span></span></a><ul class="mr-0"><li><a class="level is-mobile is-marginless" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5Vue3%E5%8E%9F%E7%90%86/"><span class="level-start"><span class="level-item">深入Vue3原理</span></span><span class="level-end"><span class="level-item tag">8</span></span></a></li><li><a class="level is-mobile is-marginless" href="/categories/%E5%89%8D%E7%AB%AF/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAVite/"><span class="level-start"><span class="level-item">深入浅出Vite</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li></ul></li><li><a class="level is-mobile is-marginless" href="/categories/%E5%B7%A5%E5%85%B7%E6%95%99%E7%A8%8B/"><span class="level-start"><span class="level-item">工具教程</span></span><span class="level-end"><span class="level-item tag">4</span></span></a><ul class="mr-0"><li><a class="level is-mobile is-marginless" href="/categories/%E5%B7%A5%E5%85%B7%E6%95%99%E7%A8%8B/%E4%B8%BB%E9%A2%98%E5%B7%A5%E5%85%B7/"><span class="level-start"><span class="level-item">主题工具</span></span><span class="level-end"><span class="level-item tag">4</span></span></a></li></ul></li><li><a class="level is-mobile is-marginless" href="/categories/%E6%96%87%E7%AB%A0%E5%8A%A0%E5%AF%86/"><span class="level-start"><span class="level-item">文章加密</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/categories/%E6%B3%95%E5%BE%8B/"><span class="level-start"><span class="level-item">法律</span></span><span class="level-end"><span class="level-item tag">7</span></span></a></li></ul></div></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">归档</h3><ul class="menu-list"><li><a class="level is-mobile is-marginless" href="/archives/2022/09/"><span class="level-start"><span class="level-item">九月 2022</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2022/08/"><span class="level-start"><span class="level-item">八月 2022</span></span><span class="level-end"><span class="level-item tag">3</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2022/07/"><span class="level-start"><span class="level-item">七月 2022</span></span><span class="level-end"><span class="level-item tag">3</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2022/06/"><span class="level-start"><span class="level-item">六月 2022</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2020/01/"><span class="level-start"><span class="level-item">一月 2020</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><a class="level is-mobile is-marginless" href="/archives/"><span class="level-start"><span class="level-item">查看全部&gt;&gt;</span></span></a></ul></div></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">标签</h3><div class="field is-grouped is-grouped-multiline"><div class="control"><a class="tags has-addons" href="/tags/%E5%89%8D%E7%AB%AF/"><span class="tag">前端</span><span class="tag is-grey-lightest">10</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E6%B3%95%E5%BE%8B/"><span class="tag">法律</span><span class="tag is-grey-lightest">7</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E5%B7%A5%E5%85%B7%E6%95%99%E7%A8%8B/"><span class="tag">工具教程</span><span class="tag is-grey-lightest">3</span></a></div><div class="control"><a class="tags has-addons" href="/tags/hexo%E4%B8%BB%E9%A2%98/"><span class="tag">hexo主题</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/icarus%E4%B8%BB%E9%A2%98%E9%85%8D%E7%BD%AE/"><span class="tag">icarus主题配置</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E5%8A%A0%E5%AF%86%E6%96%87%E7%AB%A0/"><span class="tag">加密文章</span><span class="tag is-grey-lightest">1</span></a></div></div></div></div></div><!--!--></div></div></div></section><footer class="footer"><div class="container"><div class="level"><div class="level-start"><a class="footer-logo is-block mb-2" href="/"><img src="https://s1.ax1x.com/2023/05/25/p9H4zND.png" alt="爷ゝ本霸气っ" height="28"></a><p class="size-small"><span>&copy; 2023 爷ゝ本霸气っ</span>  Powered by <a href="https://hexo.io/" target="_blank">Hexo</a> &amp; <a href="https://github.com/ppoffice/hexo-theme-icarus" target="_blank">Icarus</a>,Modify by <a href="https://github.com/Leon9916/hexo-blog" target="_blank">removeif</a> <br>© 版权2说明：[本网站所有内容均收集于互联网或自己创作,<br>    方便于自己学习交流，如有侵权，请<a href="mailto:2476288442@qq.com">联系</a>，立即处理]<br><script type="text/javascript" src="/js/statistics.js"></script><span id="statistic-times">网站运行时间统计加载中...</span></p></div><div class="level-end"></div></div></div></footer><script src="https://cdn.jsdelivr.net/npm/moment@2.22.2/min/moment-with-locales.min.js"></script><script>moment.locale("zh-CN");</script><script>var IcarusThemeSettings = {
+            site: {
+                url: 'https://removeif.github.io',
+                external_link: {"enable":true,"exclude":[]}
+            },
+            article: {
+                highlight: {
+                    clipboard: true,
+                    fold: 'unfolded'
+                }
+            }
+        };</script><script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.4/dist/clipboard.min.js" defer></script><script src="/js/animation.js"></script><a id="back-to-top" title="回到顶端" href="javascript:;"><i class="fas fa-chevron-up"></i></a><script src="/js/back-to-top.js" defer></script><!--!--><!--!--><script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/js/lightgallery.min.js" defer></script><script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js" defer></script><script src="/js/gallery.js" defer></script><!--!--><!--!--><!--!--><script src="/js/main.js" defer></script><script src="/js/comment-issue-data.js" defer></script><link rel="stylesheet" href="/css/insight.css"><div class="searchbox ins-search"><div class="searchbox-container ins-search-container"><div class="searchbox-input-wrapper"><input class="searchbox-input ins-search-input" type="text" placeholder="想要查找什么..."><span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span></div><div class="searchbox-result-wrapper ins-section-wrapper"><div class="ins-section-container"></div></div></div></div><script>(function (window) {
+            var INSIGHT_CONFIG = {
+                TRANSLATION: {
+                    POSTS: '文章',
+                    PAGES: '页面',
+                    CATEGORIES: '分类',
+                    TAGS: '标签',
+                    UNTITLED: '(无标题)',
+                },
+                CONTENT_URL: '/content.json',
+            };
+            window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+        })(window);</script><script src="/js/insight.js" defer></script></body></html>
