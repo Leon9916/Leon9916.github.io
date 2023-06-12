@@ -24,4 +24,4 @@
 + 网站采用的[Icarus主题](http://github.com/ppoffice/hexo-theme-icarus)
 + 追求尽可能的简洁，清晰，易用。
 + 在Icarus主题之上进行了部分修改。
-+ 改博客也整合了部分chatGPT,但是这些站点都是大佬们自己花钱搭建的，XDM有实力并且觉得哪位大佬搭建的chatGPT好用的，也可以打赏一波
++ 该博客也整合了部分chatGPT,但是这些站点都是大佬们自己花钱搭建的，XDM有实力并且觉得哪位大佬搭建的chatGPT好用的，也可以打赏一波
